@@ -46,19 +46,19 @@ function renderList() {
         }
 
         let innerHTML = `
-            <div class="flex justify-between items-center mb-2">
-                <div class="text-xl font-bold text-gray-800">${site.id} - ${site.name}</div>
+            <div class="flex justify-between items-center mb-1">
+                <div class="text-lg font-bold text-gray-800">${site.id} - ${site.name}</div>
                 <div>${statusBadge}</div>
             </div>
         `;
 
         // If 'Do not bother', show flag
         if (site.doNotBother) {
-            innerHTML += `<div class="text-sm font-bold text-red-600 mb-2">🚫 Do Not Bother</div>`;
+            innerHTML += `<div class="text-sm font-bold text-red-600 mb-1">🚫 Do Not Bother</div>`;
         } else {
             // Expanded Action Area
             const purchaseInfo = site.visited && site.purchaseType ? `
-                <div class="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm flex justify-between items-center">
+                <div class="mt-1 p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm flex justify-between items-center">
                     <div>
                         <span class="font-bold">Status:</span> ${site.purchaseType} 
                         ${site.amount ? ` - $${site.amount}` : ''}
@@ -68,13 +68,13 @@ function renderList() {
             ` : '';
 
             const actionButtons = !site.visited ? `
-                <div class="grid grid-cols-2 gap-2 mt-4" id="actions-${site.id}">
-                    <button onclick="setVisited('${site.id}', 'None')" class="py-3 px-2 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-sm">Skip / No</button>
-                    <button onclick="showAmountOptions('${site.id}', 'Cash')" class="py-3 px-2 bg-green-100 text-green-700 rounded-lg font-bold shadow-sm">💵 Cash</button>
-                    <button onclick="showAmountOptions('${site.id}', 'eTransfer')" class="py-3 px-2 bg-blue-100 text-blue-700 rounded-lg font-bold col-span-2 shadow-sm">📱 eTransfer</button>
+                <div class="grid grid-cols-3 gap-2 mt-2" id="actions-${site.id}">
+                    <button onclick="setVisited('${site.id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">Skip / No</button>
+                    <button onclick="showAmountOptions('${site.id}', 'Cash')" class="py-2 px-1 bg-green-100 text-green-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">💵 Cash</button>
+                    <button onclick="showAmountOptions('${site.id}', 'eTransfer')" class="py-2 px-1 bg-blue-100 text-blue-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">📱 eTrans</button>
                 </div>
                 <!-- Amount Options (Hidden by default) -->
-                <div class="hidden gap-2 mt-4 flex-col" id="payment-${site.id}">
+                <div class="hidden gap-2 mt-2 flex-col" id="payment-${site.id}">
                     <div class="text-center font-bold text-gray-600 mb-1">Select <span id="payTypeLab-${site.id}"></span> Amount:</div>
                     <div class="grid grid-cols-3 gap-2">
                         <button onclick="completePurchase('${site.id}', 5)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$5</button>

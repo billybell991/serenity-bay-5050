@@ -222,11 +222,11 @@ tallyBtn.addEventListener('click', () => {
             if (site.purchaseType === 'Cash') totalCash += site.amount;
             if (site.purchaseType === 'eTransfer') totalEtransfer += site.amount;
             
-            // Typical ticket approximations: $5 = 3 tickets, $10 = 10 tickets, $20 = 25 tickets (adjust as needed!)
-            if (site.amount === 5) estimatedTickets += 3;
-            else if (site.amount === 10) estimatedTickets += 10;
-            else if (site.amount === 20) estimatedTickets += 25;
-            else estimatedTickets += Math.floor(site.amount / 5) * 3; // Fallback
+            // Ticket scale based on images
+            if (site.amount === 5) estimatedTickets += 1;
+            else if (site.amount === 10) estimatedTickets += 3;
+            else if (site.amount === 20) estimatedTickets += 7;
+            else estimatedTickets += Math.floor(site.amount / 5) * 1; // Fallback
         }
     });
     
@@ -240,7 +240,7 @@ tallyBtn.addEventListener('click', () => {
         <div class="flex justify-between border-b pb-2 text-green-700 bg-green-50 p-2 rounded mt-2 shadow-sm border border-green-200"><span class="font-bold text-xl">🏆 Draw Prize (50%):</span> <span class="font-bold text-xl">$${finalPrize.toFixed(2)}</span></div>
         <div class="mt-4 text-center text-sm text-gray-500 bg-gray-100 p-3 rounded">
             Estimated Tickets Sold: <span class="font-bold text-gray-800 text-lg">${estimatedTickets}</span>
-            <br/><span class="text-xs">(Assuming $5=3, $10=10, $20=25 tickets)</span>
+            <br/><span class="text-xs">(Tickets: $5=1, $10=3, $20=7)</span>
         </div>
     `;
     

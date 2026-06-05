@@ -167,33 +167,62 @@ window.showQR = function() {
     });
 }
 
-// Generate CSV string
-function exportToCsv() {
-    const headers = ["Site", "Name", "Visited", "PurchaseType", "Amount", "DoNotBother"];
-    let csvContent = headers.join(",") + "\n";
+// Generate Excel file
+function exportToExcel() {
+    // 1. Calculate live tally stats
+    let totalCash = 0;
+    let totalEtransfer = 0;
+    let estimatedTickets = 0;
     
     campgroundData.forEach(site => {
-        const row = [
-            site.id,
-            `"${site.name}"`, // Quote strings in case of commas
-            site.visited ? "Yes" : "No",
-            site.purchaseType || "N/A",
-            site.amount || 0,
-            site.doNotBother ? "Yes" : "No"
-        ];
-        csvContent += row.join(",") + "\n";
+        if (site.visited && site.amount) {
+            if (site.purchaseType === 'Cash') totalCash += site.amount;
+            if (site.purchaseType === 'eTransfer') totalEtransfer += site.amount;
+            
+            if (site.amount === 5) estimatedTickets += 1;
+            else if (site.amount === 10) estimatedTickets += 3;
+            else if (site.amount === 20) estimatedTickets += 7;
+            else estimatedTickets += Math.floor(site.amount / 5) * 1;
+        }
     });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
     
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `5050_Report_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const grossTotal = totalCash + totalEtransfer;
+    const finalPrize = grossTotal / 2;
+
+    // 2. Format Data for Sheet 1 (All Campsites)
+    const dataRows = campgroundData.map(site => ({
+        "Site Number": site.id,
+        "Camper(s)": site.name,
+        "Visited?": site.visited ? "Yes" : "No",
+        "Payment Method": site.purchaseType || "None",
+        "Amount ($)": site.amount || 0,
+        "Do Not Bother": site.doNotBother ? "Yes" : "No"
+    }));
+
+    // 3. Format Data for Sheet 2 (Tally Summary)
+    const tallyRows = [
+        { "Metric": "Total Cash Collected", "Value": `$${totalCash.toFixed(2)}` },
+        { "Metric": "Total eTransfer Collected", "Value": `$${totalEtransfer.toFixed(2)}` },
+        { "Metric": "Gross Raised", "Value": `$${grossTotal.toFixed(2)}` },
+        { "Metric": "Draw Prize (50%)", "Value": `$${finalPrize.toFixed(2)}` },
+        { "Metric": "Estimated Tickets Sold", "Value": estimatedTickets }
+    ];
+
+    // 4. Create the Excel Workbook
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.json_to_sheet(dataRows);
+    const ws2 = XLSX.utils.json_to_sheet(tallyRows);
+
+    // Auto-size columns slightly
+    ws1['!cols'] = [{wch: 12}, {wch: 25}, {wch: 10}, {wch: 15}, {wch: 12}, {wch: 15}];
+    ws2['!cols'] = [{wch: 30}, {wch: 15}];
+
+    XLSX.utils.book_append_sheet(wb, ws1, "Campsites Directory");
+    XLSX.utils.book_append_sheet(wb, ws2, "Tally Summary");
+
+    // 5. Download the file
+    const dateStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `SerenityBay_50-50_Report_${dateStr}.xlsx`);
 }
 
 // Save to localStorage
@@ -213,7 +242,7 @@ closeQrBtn.addEventListener('click', () => {
     qrModal.classList.remove('flex');
 });
 
-exportHeaderBtn.addEventListener('click', exportToCsv);
+exportHeaderBtn.addEventListener('click', exportToExcel);
 
 tallyBtn.addEventListener('click', () => {
     let totalCash = 0;

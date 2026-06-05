@@ -25,7 +25,10 @@ const sitesList = document.getElementById('sitesList');
 const qrModal = document.getElementById('qrModal');
 const qrCodeContainer = document.getElementById('qrcode');
 const closeQrBtn = document.getElementById('closeQr');
-const exportHeaderBtn = document.getElementById('exportHeaderBtn');
+const helpBtn = document.getElementById('helpBtn');
+const helpModal = document.getElementById('helpModal');
+const closeHelpBtn = document.getElementById('closeHelp');
+const exportFromHelpBtn = document.getElementById('exportFromHelpBtn');
 const tallyModal = document.getElementById('tallyModal');
 const closeTallyBtn = document.getElementById('closeTally');
 const tallyBtn = document.getElementById('tallyBtn');
@@ -357,7 +360,17 @@ closeQrBtn.addEventListener('click', () => {
     qrModal.classList.remove('flex');
 });
 
-exportHeaderBtn.addEventListener('click', exportToExcel);
+helpBtn.addEventListener('click', () => {
+    helpModal.classList.remove('hidden');
+    helpModal.classList.add('flex');
+});
+
+closeHelpBtn.addEventListener('click', () => {
+    helpModal.classList.add('hidden');
+    helpModal.classList.remove('flex');
+});
+
+exportFromHelpBtn.addEventListener('click', exportToExcel);
 
 tallyBtn.addEventListener('click', () => {
     let totalCash = 0;
@@ -434,6 +447,20 @@ mapBtn.addEventListener('click', () => {
 closeMapBtn.addEventListener('click', () => {
     mapModal.classList.add('hidden');
     mapModal.classList.remove('flex');
+});
+
+// Prevent the browser back button from navigating away from the app.
+// If a modal is open, back closes it. Otherwise, stay on the app.
+history.pushState({ page: 'app' }, '', window.location.href);
+window.addEventListener('popstate', () => {
+    const modals = [qrModal, tallyModal, mapModal, helpModal];
+    const openModal = modals.find(m => !m.classList.contains('hidden'));
+    if (openModal) {
+        openModal.classList.add('hidden');
+        openModal.classList.remove('flex');
+    }
+    // Always push back so the browser never actually goes back
+    history.pushState({ page: 'app' }, '', window.location.href);
 });
 
 // Initial render is triggered by the Firebase onValue listener above

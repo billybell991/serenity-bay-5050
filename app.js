@@ -40,10 +40,14 @@ const mapModal = document.getElementById('mapModal');
 const closeMapBtn = document.getElementById('closeMap');
 
 // Build the action buttons HTML — shared between regular sites and extras
-function buildActionHTML(id) {
+function buildActionHTML(id, showSkip = true) {
+    const skipBtn = showSkip
+        ? `<button onclick="setVisited('${id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">Skip / No</button>`
+        : '';
+    const gridCols = showSkip ? 'grid-cols-3' : 'grid-cols-2';
     return `
-        <div class="grid grid-cols-3 gap-2 mt-2" id="actions-${id}">
-            <button onclick="setVisited('${id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">Skip / No</button>
+        <div class="grid ${gridCols} gap-2 mt-2" id="actions-${id}">
+            ${skipBtn}
             <button onclick="showAmountOptions('${id}', 'Cash')" class="py-2 px-1 bg-green-100 text-green-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">💵 Cash</button>
             <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-2 px-1 bg-blue-100 text-blue-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">📱 eTrans</button>
         </div>
@@ -157,7 +161,7 @@ function renderList() {
                 </div>
             ` : '';
 
-            const extraActionButtons = !extra.visited ? buildActionHTML(extra.id) : '';
+            const extraActionButtons = !extra.visited ? buildActionHTML(extra.id, false) : '';
 
             extraHTML += extraPurchaseInfo + extraActionButtons;
             extraCard.innerHTML = extraHTML;

@@ -34,16 +34,49 @@ const closeTallyBtn = document.getElementById('closeTally');
 const tallyBtn = document.getElementById('tallyBtn');
 const tallyContent = document.getElementById('tallyContent');
 const resetAllBtn = document.getElementById('resetAllBtn');
+const resetAllBtnHelp = document.getElementById('resetAllBtnHelp');
 const mapBtn = document.getElementById('mapBtn');
 const mapModal = document.getElementById('mapModal');
 const closeMapBtn = document.getElementById('closeMap');
 
+// Build the action buttons HTML — shared between regular sites and extras
+function buildActionHTML(id) {
+    return `
+        <div class="grid grid-cols-3 gap-2 mt-2" id="actions-${id}">
+            <button onclick="setVisited('${id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">Skip / No</button>
+            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-2 px-1 bg-green-100 text-green-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">💵 Cash</button>
+            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-2 px-1 bg-blue-100 text-blue-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">📱 eTrans</button>
+        </div>
+        <div class="hidden gap-2 mt-2 flex-col" id="payment-${id}">
+            <div class="text-center font-bold text-gray-600 mb-1">Select <span id="payTypeLab-${id}"></span> Amount:</div>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="completePurchase('${id}', 5)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$5</button>
+                <button onclick="completePurchase('${id}', 10)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$10</button>
+                <button onclick="completePurchase('${id}', 20)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$20</button>
+            </div>
+            <button id="qrBtn-${id}" onclick="showQR()" class="hidden mt-2 py-3 w-full bg-gray-800 text-white rounded-lg font-bold align-center justify-center">
+                <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                Show QR Code / Email
+            </button>
+            <button onclick="cancelPayment('${id}')" class="mt-2 py-2 w-full bg-red-100 text-red-700 border border-red-200 rounded-lg font-bold shadow-sm text-sm hover:bg-red-200">Back</button>
+        </div>
+    `;
+}
+
 // Render the list
 function renderList() {
     sitesList.innerHTML = '';
-    
-    // Filter data
+
+    // Build a map of extras grouped by their parent site id
+    const extrasByParent = {};
+    campgroundData.filter(s => s.isExtra).forEach(s => {
+        if (!extrasByParent[s.parentId]) extrasByParent[s.parentId] = [];
+        extrasByParent[s.parentId].push(s);
+    });
+
+    // Filter only non-extra sites by the search query
     const filtered = campgroundData.filter(site => {
+        if (site.isExtra) return false;
         const query = currentFilter.toLowerCase();
         return site.id.toLowerCase().includes(query);
     });
@@ -68,7 +101,6 @@ function renderList() {
         if (site.doNotBother) {
             innerHTML += `<div class="text-sm font-bold text-red-600 mb-1">🚫 Do Not Bother</div>`;
         } else {
-            // Expanded Action Area
             const purchaseInfo = site.visited && site.purchaseType ? `
                 <div class="mt-1 p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm flex justify-between items-center">
                     <div>
@@ -79,33 +111,58 @@ function renderList() {
                 </div>
             ` : '';
 
-            const actionButtons = !site.visited ? `
-                <div class="grid grid-cols-3 gap-2 mt-2" id="actions-${site.id}">
-                    <button onclick="setVisited('${site.id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">Skip / No</button>
-                    <button onclick="showAmountOptions('${site.id}', 'Cash')" class="py-2 px-1 bg-green-100 text-green-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">💵 Cash</button>
-                    <button onclick="showAmountOptions('${site.id}', 'eTransfer')" class="py-2 px-1 bg-blue-100 text-blue-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">📱 eTrans</button>
-                </div>
-                <!-- Amount Options (Hidden by default) -->
-                <div class="hidden gap-2 mt-2 flex-col" id="payment-${site.id}">
-                    <div class="text-center font-bold text-gray-600 mb-1">Select <span id="payTypeLab-${site.id}"></span> Amount:</div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="completePurchase('${site.id}', 5)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$5</button>
-                        <button onclick="completePurchase('${site.id}', 10)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$10</button>
-                        <button onclick="completePurchase('${site.id}', 20)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$20</button>
-                    </div>
-                    <button id="qrBtn-${site.id}" onclick="showQR()" class="hidden mt-2 py-3 w-full bg-gray-800 text-white rounded-lg font-bold align-center justify-center">
-                        <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                        Show QR Code / Email
-                    </button>
-                    <button onclick="cancelPayment('${site.id}')" class="mt-2 py-2 w-full bg-red-100 text-red-700 border border-red-200 rounded-lg font-bold shadow-sm text-sm hover:bg-red-200">Back</button>
-                </div>
-            ` : '';
+            const actionButtons = !site.visited ? buildActionHTML(site.id) : '';
 
             innerHTML += purchaseInfo + actionButtons;
+
+            // Add Extra button at the bottom of every regular site
+            innerHTML += `
+                <div class="mt-2 pt-2 border-t border-gray-100">
+                    <button onclick="addExtra('${site.id}')" class="text-xs text-orange-600 font-semibold py-1 px-3 bg-orange-50 border border-orange-200 rounded-md active:bg-orange-100">➕ Add Extra</button>
+                </div>
+            `;
         }
 
         card.innerHTML = innerHTML;
         sitesList.appendChild(card);
+
+        // Render any extras for this site immediately after, indented
+        const extras = extrasByParent[site.id] || [];
+        extras.forEach(extra => {
+            const extraCard = document.createElement('div');
+            extraCard.className = 'site-card bg-orange-50 border border-orange-200 ml-5';
+
+            let extraStatusBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Pending</span>`;
+            if (extra.visited) {
+                extraStatusBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Visited</span>`;
+            }
+
+            let extraHTML = `
+                <div class="flex justify-between items-center mb-1">
+                    <div class="text-base font-bold text-orange-800">📎 Extra @ ${extra.parentId}</div>
+                    <div class="flex items-center gap-2">
+                        ${extraStatusBadge}
+                        <button onclick="removeExtra('${extra.id}')" class="text-xs text-red-500 font-bold px-2 py-1 bg-red-50 border border-red-200 rounded">✕</button>
+                    </div>
+                </div>
+            `;
+
+            const extraPurchaseInfo = extra.visited && extra.purchaseType ? `
+                <div class="mt-1 p-2 bg-white rounded-lg border border-orange-200 text-sm flex justify-between items-center">
+                    <div>
+                        <span class="font-bold">Status:</span> ${extra.purchaseType}
+                        ${extra.amount ? ` - $${extra.amount}` : ''}
+                    </div>
+                    <button class="px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${extra.id}')">Undo</button>
+                </div>
+            ` : '';
+
+            const extraActionButtons = !extra.visited ? buildActionHTML(extra.id) : '';
+
+            extraHTML += extraPurchaseInfo + extraActionButtons;
+            extraCard.innerHTML = extraHTML;
+            sitesList.appendChild(extraCard);
+        });
     });
 }
 
@@ -161,6 +218,30 @@ window.cancelPayment = function(id) {
     const paymentDiv = document.getElementById(`payment-${id}`);
     paymentDiv.classList.add('hidden');
     paymentDiv.classList.remove('flex');
+}
+
+window.addExtra = function(parentId) {
+    const existingExtras = campgroundData.filter(s => s.isExtra && s.parentId === parentId);
+    const nextNum = existingExtras.length + 1;
+    const newId = `${parentId}-E${nextNum}`;
+    campgroundData.push({
+        id: newId,
+        name: `Extra @ ${parentId}`,
+        parentId: parentId,
+        isExtra: true,
+        visited: false,
+        doNotBother: false,
+        purchaseType: null,
+        amount: null
+    });
+    saveData();
+    renderList();
+}
+
+window.removeExtra = function(id) {
+    campgroundData = campgroundData.filter(s => s.id !== id);
+    saveData();
+    renderList();
 }
 
 window.showQR = function() {
@@ -413,9 +494,11 @@ closeTallyBtn.addEventListener('click', () => {
     tallyModal.classList.remove('flex');
 });
 
-resetAllBtn.addEventListener('click', () => {
+function doResetAll() {
     if (!confirm("⚠️ This will erase ALL of this week's data — are you sure?")) return;
     if (!confirm("🛑 Make sure you're sure!! This CANNOT be undone. Proceed?")) return;
+    // Remove all extra entries entirely, then reset regular sites
+    campgroundData = campgroundData.filter(s => !s.isExtra);
     campgroundData.forEach(site => {
         site.visited = false;
         site.purchaseType = null;
@@ -425,7 +508,12 @@ resetAllBtn.addEventListener('click', () => {
     renderList();
     tallyModal.classList.add('hidden');
     tallyModal.classList.remove('flex');
-});
+    helpModal.classList.add('hidden');
+    helpModal.classList.remove('flex');
+}
+
+resetAllBtn.addEventListener('click', doResetAll);
+resetAllBtnHelp.addEventListener('click', doResetAll);
 
 let pz;
 mapBtn.addEventListener('click', () => {

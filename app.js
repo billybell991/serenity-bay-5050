@@ -498,6 +498,11 @@ closeTallyBtn.addEventListener('click', () => {
 });
 
 function doResetAll() {
+    const pw = prompt("Enter admin password to reset data:");
+    if (pw !== "serenity2026") {
+        if (pw !== null) alert("Incorrect password.");
+        return;
+    }
     if (!confirm("⚠️ This will erase ALL of this week's data — are you sure?")) return;
     if (!confirm("🛑 Make sure you're sure!! This CANNOT be undone. Proceed?")) return;
     // Remove all extra entries entirely, then reset regular sites

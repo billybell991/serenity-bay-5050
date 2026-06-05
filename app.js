@@ -22,6 +22,9 @@ const closeTallyBtn = document.getElementById('closeTally');
 const tallyBtn = document.getElementById('tallyBtn');
 const tallyContent = document.getElementById('tallyContent');
 const resetAllBtn = document.getElementById('resetAllBtn');
+const mapBtn = document.getElementById('mapBtn');
+const mapModal = document.getElementById('mapModal');
+const closeMapBtn = document.getElementById('closeMap');
 
 // Render the list
 function renderList() {
@@ -265,6 +268,16 @@ resetAllBtn.addEventListener('click', () => {
         tallyModal.classList.add('hidden');
         tallyModal.classList.remove('flex');
     }
+});
+
+mapBtn.addEventListener('click', () => {
+    mapModal.classList.remove('hidden');
+    mapModal.classList.add('flex');
+});
+
+closeMapBtn.addEventListener('click', () => {
+    mapModal.classList.add('hidden');
+    mapModal.classList.remove('flex');
 });
 
 // Initial Load

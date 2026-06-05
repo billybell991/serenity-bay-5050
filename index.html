@@ -84,18 +84,19 @@
 
     <!-- Map Modal overlay -->
     <div id="mapModal" class="hidden fixed inset-0 bg-black z-50 flex-col pb-20">
-        <div class="flex justify-between items-center p-4 bg-gray-900 text-white shadow-md">
-            <h2 class="text-lg font-bold">Park Map</h2>
+        <div class="flex justify-between items-center p-4 bg-gray-900 text-white shadow-md z-10">
+            <h2 class="text-lg font-bold">Park Map (Pinch to Zoom)</h2>
             <button id="closeMap" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold border border-gray-600">Close</button>
         </div>
-        <div class="flex-1 overflow-auto p-0 flex justify-start items-start bg-black">
-            <img src="map.png" alt="Park Map" class="max-w-none w-[1200px]" />
+        <div class="flex-1 overflow-hidden p-0 bg-black relative" id="mapContainer">
+            <img src="map.png" alt="Park Map" class="w-full h-auto object-contain origin-top-left" id="mapImage" />
         </div>
     </div>
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
     <script src="data.js"></script>
     <script src="app.js"></script>
 </body>

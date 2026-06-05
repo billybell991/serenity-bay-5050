@@ -168,7 +168,7 @@ window.showQR = function() {
 }
 
 // Generate Excel file
-function exportToExcel() {
+async function exportToExcel() {
     // 1. Calculate live tally stats
     let totalCash = 0;
     let totalEtransfer = 0;
@@ -189,40 +189,147 @@ function exportToExcel() {
     const grossTotal = totalCash + totalEtransfer;
     const finalPrize = grossTotal / 2;
 
-    // 2. Format Data for Sheet 1 (All Campsites)
-    const dataRows = campgroundData.map(site => ({
-        "Site Number": site.id,
-        "Camper(s)": site.name,
-        "Visited?": site.visited ? "Yes" : "No",
-        "Payment Method": site.purchaseType || "None",
-        "Amount ($)": site.amount || 0,
-        "Do Not Bother": site.doNotBother ? "Yes" : "No"
-    }));
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Serenity Bay Tracker';
+    workbook.created = new Date();
 
-    // 3. Format Data for Sheet 2 (Tally Summary)
-    const tallyRows = [
-        { "Metric": "Total Cash Collected", "Value": `$${totalCash.toFixed(2)}` },
-        { "Metric": "Total eTransfer Collected", "Value": `$${totalEtransfer.toFixed(2)}` },
-        { "Metric": "Gross Raised", "Value": `$${grossTotal.toFixed(2)}` },
-        { "Metric": "Draw Prize (50%)", "Value": `$${finalPrize.toFixed(2)}` },
-        { "Metric": "Estimated Tickets Sold", "Value": estimatedTickets }
+    // --- Sheet 1: Campsites Directory ---
+    const ws1 = workbook.addWorksheet('Campsites Directory', { views: [{ showGridLines: false }] });
+    
+    ws1.columns = [
+        { header: 'Site', key: 'id', width: 10 },
+        { header: 'Camper(s)', key: 'name', width: 30 },
+        { header: 'Visited', key: 'visited', width: 15 },
+        { header: 'Payment Method', key: 'purchaseType', width: 20 },
+        { header: 'Amount', key: 'amount', width: 15 },
+        { header: 'Do Not Bother', key: 'doNotBother', width: 18 }
     ];
 
-    // 4. Create the Excel Workbook
-    const wb = XLSX.utils.book_new();
-    const ws1 = XLSX.utils.json_to_sheet(dataRows);
-    const ws2 = XLSX.utils.json_to_sheet(tallyRows);
+    // Style Header Row
+    const headerRow = ws1.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } }; // Blue-700
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 25;
 
-    // Auto-size columns slightly
-    ws1['!cols'] = [{wch: 12}, {wch: 25}, {wch: 10}, {wch: 15}, {wch: 12}, {wch: 15}];
-    ws2['!cols'] = [{wch: 30}, {wch: 15}];
+    // Populate Rows
+    campgroundData.forEach((site, index) => {
+        const row = ws1.addRow({
+            id: site.id,
+            name: site.name,
+            visited: site.visited ? 'Yes' : 'No',
+            purchaseType: site.purchaseType || '-',
+            amount: site.amount || 0,
+            doNotBother: site.doNotBother ? 'Yes' : 'No'
+        });
 
-    XLSX.utils.book_append_sheet(wb, ws1, "Campsites Directory");
-    XLSX.utils.book_append_sheet(wb, ws2, "Tally Summary");
+        // Alternating row styling
+        if (index % 2 === 1) {
+            row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
+        }
 
-    // 5. Download the file
-    const dateStr = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `SerenityBay_50-50_Report_${dateStr}.xlsx`);
+        row.getCell('amount').numFmt = '"$"#,##0.00';
+        row.alignment = { vertical: 'middle' };
+        row.getCell('id').alignment = { horizontal: 'center' };
+        row.getCell('visited').alignment = { horizontal: 'center' };
+        row.getCell('purchaseType').alignment = { horizontal: 'center' };
+        row.getCell('doNotBother').alignment = { horizontal: 'center' };
+
+        // Dynamic Status Colors
+        if (site.visited) {
+            row.getCell('visited').font = { color: { argb: 'FF16A34A' }, bold: true }; // Green
+        }
+        if (site.purchaseType === 'Cash') {
+            row.getCell('purchaseType').font = { color: { argb: 'FF15803D' }, bold: true }; 
+        } else if (site.purchaseType === 'eTransfer') {
+            row.getCell('purchaseType').font = { color: { argb: 'FF2563EB' }, bold: true };
+        }
+
+        if (site.doNotBother) {
+            row.getCell('doNotBother').font = { color: { argb: 'FFDC2626' }, bold: true }; // Red
+            row.font = { color: { argb: 'FF9CA3AF' }, italic: true }; // Gray out unbothered sites
+        }
+        
+        row.height = 20;
+    });
+
+    // Add faint borders to everything
+    ws1.eachRow({ includeEmpty: false }, function(row, rowNumber) {
+        row.eachCell({ includeEmpty: false }, function(cell, colNumber) {
+            cell.border = {
+                top: {style:'thin', color: {argb:'FFE5E7EB'}},
+                left: {style:'thin', color: {argb:'FFE5E7EB'}},
+                bottom: {style:'thin', color: {argb:'FFE5E7EB'}},
+                right: {style:'thin', color: {argb:'FFE5E7EB'}}
+            };
+        });
+    });
+
+
+    // --- Sheet 2: Tally Summary ---
+    const ws2 = workbook.addWorksheet('Live Tally', { views: [{ showGridLines: false }] });
+    
+    ws2.getColumn('A').width = 5; // Spacing
+    ws2.getColumn('B').width = 30; // Category
+    ws2.getColumn('C').width = 25; // Value
+
+    // Page Title
+    ws2.mergeCells('B2:C2');
+    const title = ws2.getCell('B2');
+    title.value = "📊 Serenity Bay 50/50 - Final Tally";
+    title.font = { size: 18, bold: true, color: { argb: 'FF1F2937' } };
+    title.alignment = { horizontal: 'center' };
+    
+    const DateCell = ws2.getCell('B3');
+    ws2.mergeCells('B3:C3');
+    DateCell.value = `Generated on: ${new Date().toLocaleDateString()}`;
+    DateCell.alignment = { horizontal: 'center' };
+    DateCell.font = { italic: true, color: { argb: 'FF6B7280' } };
+
+    // Function to add a styled stat row
+    const addStatRow = (rowNum, label, val, isMoney, bgColor, textColor, isBold) => {
+        const row = ws2.getRow(rowNum);
+        row.height = 25;
+        row.getCell('B').value = label;
+        row.getCell('C').value = val;
+        
+        row.getCell('B').font = { bold: isBold, color: { argb: textColor }, size: 14 };
+        row.getCell('C').font = { bold: isBold, color: { argb: textColor }, size: 14 };
+        
+        if (isMoney) row.getCell('C').numFmt = '"$"#,##0.00';
+        row.getCell('B').alignment = { vertical: 'middle', indent: 1 };
+        row.getCell('C').alignment = { vertical: 'middle', horizontal: 'right', indent: 1 };
+        
+        row.getCell('B').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+        row.getCell('C').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+
+        row.getCell('B').border = { top: {style:'thin', color:{argb:'FFD1D5DB'}}, bottom: {style:'thin', color:{argb:'FFD1D5DB'}}, left: {style:'thin', color:{argb:'FFD1D5DB'}} };
+        row.getCell('C').border = { top: {style:'thin', color:{argb:'FFD1D5DB'}}, bottom: {style:'thin', color:{argb:'FFD1D5DB'}}, right: {style:'thin', color:{argb:'FFD1D5DB'}} };
+    };
+
+    // Populate rows
+    addStatRow(6, '💵 Total Cash Collected', totalCash, true, 'FFF0FDF4', 'FF166534', false); // Green tint
+    addStatRow(7, '📱 Total eTransfer Collected', totalEtransfer, true, 'FFEFF6FF', 'FF1E40AF', false); // Blue tint
+    addStatRow(8, '💰 Gross Total Raised', grossTotal, true, 'FFFFFBEB', 'FF92400E', true); // Yellow tint
+    addStatRow(10, '🏆 50% Draw Prize Output', finalPrize, true, 'FFDCFCE7', 'FF16A34A', true); // Bright green tint
+    ws2.getRow(10).height = 35; // Make prize bigger
+    ws2.getRow(10).getCell('B').font = { bold: true, color: { argb: 'FF16A34A' }, size: 18 };
+    ws2.getRow(10).getCell('C').font = { bold: true, color: { argb: 'FF16A34A' }, size: 18 };
+
+    addStatRow(13, '🎟️ Estimated Tickets Sold', estimatedTickets, false, 'FFF3F4F6', 'FF374151', true);
+    ws2.getCell('C13').alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // 5. Download the file via blob
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `SerenityBay_50-50_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // Save to localStorage
@@ -299,9 +406,21 @@ resetAllBtn.addEventListener('click', () => {
     }
 });
 
+let pz;
 mapBtn.addEventListener('click', () => {
     mapModal.classList.remove('hidden');
     mapModal.classList.add('flex');
+    
+    // Initialize panzoom only after the modal is visible so it calculates boundaries correctly
+    if (!pz) {
+        const mapImage = document.getElementById('mapImage');
+        pz = panzoom(mapImage, {
+            maxZoom: 6,
+            minZoom: 0.5,
+            bounds: true,
+            boundsPadding: 0.1
+        });
+    }
 });
 
 closeMapBtn.addEventListener('click', () => {

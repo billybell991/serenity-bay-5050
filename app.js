@@ -85,7 +85,7 @@ function renderList() {
                         <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                         Show QR Code
                     </button>
-                    <button onclick="cancelPayment('${site.id}')" class="mt-2 py-2 text-gray-500 underline text-sm hover:text-gray-700">Back</button>
+                    <button onclick="cancelPayment('${site.id}')" class="mt-2 py-2 w-full bg-red-100 text-red-700 border border-red-200 rounded-lg font-bold shadow-sm text-sm hover:bg-red-200">Back</button>
                 </div>
             ` : '';
 

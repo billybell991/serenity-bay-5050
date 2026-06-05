@@ -1,10 +1,19 @@
-const CACHE_KEY = "5050_tracker_data";
+const dataRef = firebase.database().ref('campgroundData');
 
-// Load data or initialize from defaults
-let campgroundData = JSON.parse(localStorage.getItem(CACHE_KEY));
-if (!campgroundData) {
-    campgroundData = defaultCampsites;
-}
+let campgroundData = [];
+
+// Listen for real-time updates — fires on load and whenever any device makes a change
+dataRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        campgroundData = data;
+    } else {
+        // First ever run — seed the database with the site list
+        campgroundData = defaultCampsites;
+        dataRef.set(defaultCampsites);
+    }
+    renderList();
+});
 
 // Global Variables
 let currentFilter = '';
@@ -332,9 +341,8 @@ async function exportToExcel() {
     document.body.removeChild(link);
 }
 
-// Save to localStorage
 function saveData() {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(campgroundData));
+    dataRef.set(campgroundData);
 }
 
 // Event Listeners
@@ -428,5 +436,4 @@ closeMapBtn.addEventListener('click', () => {
     mapModal.classList.remove('flex');
 });
 
-// Initial Load
-renderList();
+// Initial render is triggered by the Firebase onValue listener above

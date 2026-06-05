@@ -401,17 +401,17 @@ closeTallyBtn.addEventListener('click', () => {
 });
 
 resetAllBtn.addEventListener('click', () => {
-    if(confirm("Are you SURE you want to erase all visits and totals? This cannot be undone!")) {
-        campgroundData.forEach(site => {
-            site.visited = false;
-            site.purchaseType = null;
-            site.amount = null;
-        });
-        saveData();
-        renderList();
-        tallyModal.classList.add('hidden');
-        tallyModal.classList.remove('flex');
-    }
+    if (!confirm("⚠️ This will erase ALL of this week's data — are you sure?")) return;
+    if (!confirm("🛑 Make sure you're sure!! This CANNOT be undone. Proceed?")) return;
+    campgroundData.forEach(site => {
+        site.visited = false;
+        site.purchaseType = null;
+        site.amount = null;
+    });
+    saveData();
+    renderList();
+    tallyModal.classList.add('hidden');
+    tallyModal.classList.remove('flex');
 });
 
 let pz;

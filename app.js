@@ -33,7 +33,6 @@ const tallyModal = document.getElementById('tallyModal');
 const closeTallyBtn = document.getElementById('closeTally');
 const tallyBtn = document.getElementById('tallyBtn');
 const tallyContent = document.getElementById('tallyContent');
-const resetAllBtn = document.getElementById('resetAllBtn');
 const resetAllBtnHelp = document.getElementById('resetAllBtnHelp');
 const mapBtn = document.getElementById('mapBtn');
 const mapModal = document.getElementById('mapModal');
@@ -516,7 +515,6 @@ function doResetAll() {
     helpModal.classList.remove('flex');
 }
 
-resetAllBtn.addEventListener('click', doResetAll);
 resetAllBtnHelp.addEventListener('click', doResetAll);
 
 let pz;

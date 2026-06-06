@@ -86,7 +86,7 @@ function renderList() {
 
     filtered.forEach(site => {
         const card = document.createElement('div');
-        card.className = `site-card ${site.doNotBother ? 'opacity-60 bg-gray-200 border-red-300' : 'bg-white'}`;
+        card.className = `site-card ${site.doNotBother ? 'opacity-60 bg-gray-200 border-red-300' : (site.visited ? 'card-visited bg-gray-50' : 'bg-white')}`;
         
         let statusBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Pending</span>`;
         if (site.visited) {
@@ -113,7 +113,7 @@ function renderList() {
                         <span class="font-bold">Status:</span> ${site.purchaseType} 
                         ${site.amount ? ` - $${site.amount}` : ''}
                     </div>
-                    <button class="px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${site.id}')">Undo</button>
+                    <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${site.id}')">Undo</button>
                 </div>
             ` : '';
 
@@ -129,7 +129,7 @@ function renderList() {
         const extras = extrasByParent[site.id] || [];
         extras.forEach(extra => {
             const extraCard = document.createElement('div');
-            extraCard.className = 'site-card bg-orange-50 border border-orange-200 ml-5';
+            extraCard.className = `site-card ${extra.visited ? 'card-visited bg-gray-50 border border-gray-200' : 'bg-orange-50 border border-orange-200'} ml-5`;
 
             let extraStatusBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Pending</span>`;
             if (extra.visited) {
@@ -152,7 +152,7 @@ function renderList() {
                         <span class="font-bold">Status:</span> ${extra.purchaseType}
                         ${extra.amount ? ` - $${extra.amount}` : ''}
                     </div>
-                    <button class="px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${extra.id}')">Undo</button>
+                    <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${extra.id}')">Undo</button>
                 </div>
             ` : '';
 

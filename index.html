@@ -17,6 +17,24 @@
             margin-bottom: 12px;
             padding: 16px;
         }
+        .card-visited {
+            position: relative;
+            pointer-events: none;
+        }
+        .card-visited::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(209, 213, 219, 0.55);
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .undo-btn {
+            pointer-events: auto;
+            position: relative;
+            z-index: 1;
+        }
     </style>
 </head>
 <body class="pb-28 text-gray-900">
@@ -91,6 +109,11 @@
                 <div>
                     <h3 class="font-bold text-blue-700 text-lg mb-1">🎟️ Selling Tickets</h3>
                     <p class="text-sm leading-relaxed">Find the camper's site in the list — or type their site number (like <strong>B4</strong>) in the search box at the top. Tap their card, then tap <strong>Cash</strong> or <strong>eTransfer</strong>, then choose the dollar amount. The site will be marked ✅ Visited!</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">➕ Multiple Buyers at One Site</h3>
+                    <p class="text-sm leading-relaxed">If more than one person at the same site wants to buy tickets, tap <strong>➕ Add Extra</strong> on their site card. A new entry — labelled <strong>📎 Extra @ [site]</strong> — will appear right below it with its own Cash / eTransfer buttons. You can add as many extras as needed. To remove one, tap the <strong>✕</strong> button on the extra card.</p>
                 </div>
 
                 <div>

@@ -40,20 +40,54 @@ const closeMapBtn = document.getElementById('closeMap');
 
 // Build the action buttons HTML — shared between regular sites and extras
 function buildActionHTML(id, showSkip = true, addExtraId = null) {
-    const skipBtn = showSkip
-        ? `<button onclick="setVisited('${id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">No</button>`
-        : '';
-    const addExtraBtn = addExtraId
-        ? `<button onclick="addExtra('${addExtraId}')" class="py-2 px-1 text-orange-600 font-bold bg-orange-50 border border-orange-200 rounded-lg shadow-sm text-xs sm:text-sm leading-tight">➕ Extra</button>`
-        : '';
-    const numCols = (showSkip ? 1 : 0) + 2 + (addExtraId ? 1 : 0);
-    const gridCols = `grid-cols-${numCols}`;
+    // Full 2x2 grid: Cash & eTrans on top, No & Extra on bottom
+    if (showSkip && addExtraId) {
+        return `
+        <div class="grid grid-cols-2 gap-3 mt-3" id="actions-${id}">
+            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-4 bg-green-100 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-200 active:bg-green-200">
+                <span class="text-2xl mb-1">💵</span>
+                <span class="text-sm">Cash</span>
+            </button>
+            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-4 bg-blue-100 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-200 active:bg-blue-200">
+                <span class="text-2xl mb-1">📱</span>
+                <span class="text-sm">eTransfer</span>
+            </button>
+            <button onclick="setVisited('${id}', 'None')" class="py-4 bg-gray-100 text-gray-700 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-gray-200 active:bg-gray-200">
+                <span class="text-2xl mb-1">🚫</span>
+                <span class="text-sm">No</span>
+            </button>
+            <button onclick="addExtra('${addExtraId}')" class="py-4 bg-orange-50 text-orange-700 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-orange-200 active:bg-orange-100">
+                <span class="text-2xl mb-1">➕</span>
+                <span class="text-sm">Add Extra</span>
+            </button>
+        </div>
+        <div class="hidden gap-2 mt-2 flex-col" id="payment-${id}">
+            <div class="text-center font-bold text-gray-600 mb-1">Select <span id="payTypeLab-${id}"></span> Amount:</div>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="completePurchase('${id}', 5)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$5</button>
+                <button onclick="completePurchase('${id}', 10)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$10</button>
+                <button onclick="completePurchase('${id}', 20)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg hover:bg-indigo-100 transition-colors">$20</button>
+            </div>
+            <button id="qrBtn-${id}" onclick="showQR()" class="hidden mt-2 py-3 w-full bg-gray-800 text-white rounded-lg font-bold align-center justify-center">
+                <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                Show QR Code / Email
+            </button>
+            <button onclick="cancelPayment('${id}')" class="mt-2 py-2 w-full bg-red-100 text-red-700 border border-red-200 rounded-lg font-bold shadow-sm text-sm hover:bg-red-200">Back</button>
+        </div>
+    `;
+    }
+
+    // Extras: just Cash + eTrans in a 2-col row
     return `
-        <div class="grid ${gridCols} gap-2 mt-2" id="actions-${id}">
-            ${skipBtn}
-            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-2 px-1 bg-green-100 text-green-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">💵 Cash</button>
-            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-2 px-1 bg-blue-100 text-blue-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">📱 eTrans</button>
-            ${addExtraBtn}
+        <div class="grid grid-cols-2 gap-3 mt-3" id="actions-${id}">
+            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-4 bg-green-100 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-200 active:bg-green-200">
+                <span class="text-2xl mb-1">💵</span>
+                <span class="text-sm">Cash</span>
+            </button>
+            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-4 bg-blue-100 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-200 active:bg-blue-200">
+                <span class="text-2xl mb-1">📱</span>
+                <span class="text-sm">eTransfer</span>
+            </button>
         </div>
         <div class="hidden gap-2 mt-2 flex-col" id="payment-${id}">
             <div class="text-center font-bold text-gray-600 mb-1">Select <span id="payTypeLab-${id}"></span> Amount:</div>
@@ -220,7 +254,25 @@ window.cancelPayment = function(id) {
 
 window.toggleCard = function(id) {
     const body = document.getElementById(`body-${id}`);
-    if (body) body.classList.toggle('hidden');
+    if (!body) return;
+    const isExpanding = body.classList.contains('hidden');
+    // Collapse all other open cards first
+    document.querySelectorAll('[id^="body-"]').forEach(el => {
+        if (el.id !== `body-${id}`) el.classList.add('hidden');
+    });
+    body.classList.toggle('hidden');
+    if (isExpanding) {
+        requestAnimationFrame(() => {
+            const card = body.closest('.site-card');
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            const navHeight = 90; // fixed bottom nav approx height
+            const viewBottom = window.innerHeight - navHeight;
+            if (rect.bottom > viewBottom) {
+                window.scrollBy({ top: rect.bottom - viewBottom + 8, behavior: 'smooth' });
+            }
+        });
+    }
 }
 
 window.addExtra = function(parentId) {

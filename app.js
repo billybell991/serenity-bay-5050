@@ -96,7 +96,10 @@ function renderList() {
         let innerHTML = `
             <div class="flex justify-between items-center mb-1">
                 <div class="text-lg font-bold text-gray-800">${site.id} - ${site.name}</div>
-                <div>${statusBadge}</div>
+                <div class="flex items-center gap-2">
+                    <button onclick="addExtra('${site.id}')" class="text-xs text-orange-600 font-semibold py-1 px-3 bg-orange-50 border border-orange-200 rounded-md active:bg-orange-100">➕ Add Extra</button>
+                    ${statusBadge}
+                </div>
             </div>
         `;
 
@@ -117,13 +120,6 @@ function renderList() {
             const actionButtons = !site.visited ? buildActionHTML(site.id) : '';
 
             innerHTML += purchaseInfo + actionButtons;
-
-            // Add Extra button at the bottom of every regular site
-            innerHTML += `
-                <div class="mt-2 pt-2 border-t border-gray-100 flex justify-end">
-                    <button onclick="addExtra('${site.id}')" class="text-xs text-orange-600 font-semibold py-1 px-3 bg-orange-50 border border-orange-200 rounded-md active:bg-orange-100">➕ Add Extra</button>
-                </div>
-            `;
         }
 
         card.innerHTML = innerHTML;

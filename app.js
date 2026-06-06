@@ -39,16 +39,21 @@ const mapModal = document.getElementById('mapModal');
 const closeMapBtn = document.getElementById('closeMap');
 
 // Build the action buttons HTML — shared between regular sites and extras
-function buildActionHTML(id, showSkip = true) {
+function buildActionHTML(id, showSkip = true, addExtraId = null) {
     const skipBtn = showSkip
-        ? `<button onclick="setVisited('${id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">Skip / No</button>`
+        ? `<button onclick="setVisited('${id}', 'None')" class="py-2 px-1 bg-gray-100 text-gray-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">No</button>`
         : '';
-    const gridCols = showSkip ? 'grid-cols-3' : 'grid-cols-2';
+    const addExtraBtn = addExtraId
+        ? `<button onclick="addExtra('${addExtraId}')" class="py-2 px-1 text-orange-600 font-bold bg-orange-50 border border-orange-200 rounded-lg shadow-sm text-xs sm:text-sm leading-tight">➕ Extra</button>`
+        : '';
+    const numCols = (showSkip ? 1 : 0) + 2 + (addExtraId ? 1 : 0);
+    const gridCols = `grid-cols-${numCols}`;
     return `
         <div class="grid ${gridCols} gap-2 mt-2" id="actions-${id}">
             ${skipBtn}
             <button onclick="showAmountOptions('${id}', 'Cash')" class="py-2 px-1 bg-green-100 text-green-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">💵 Cash</button>
             <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-2 px-1 bg-blue-100 text-blue-700 rounded-lg font-bold shadow-sm text-xs sm:text-sm leading-tight">📱 eTrans</button>
+            ${addExtraBtn}
         </div>
         <div class="hidden gap-2 mt-2 flex-col" id="payment-${id}">
             <div class="text-center font-bold text-gray-600 mb-1">Select <span id="payTypeLab-${id}"></span> Amount:</div>
@@ -93,19 +98,9 @@ function renderList() {
             statusBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Visited</span>`;
         }
 
-        let innerHTML = `
-            <div class="flex justify-between items-center mb-1">
-                <div class="text-lg font-bold text-gray-800">${site.id} - ${site.name}</div>
-                <div class="flex items-center gap-2">
-                    <button onclick="addExtra('${site.id}')" class="text-xs text-orange-600 font-semibold py-1 px-3 bg-orange-50 border border-orange-200 rounded-md active:bg-orange-100">➕ Add Extra</button>
-                    ${statusBadge}
-                </div>
-            </div>
-        `;
-
-        // If 'Do not bother', show flag
+        let bodyHTML = '';
         if (site.doNotBother) {
-            innerHTML += `<div class="text-sm font-bold text-red-600 mb-1">🚫 Do Not Bother</div>`;
+            bodyHTML = `<div class="text-sm font-bold text-red-600 mb-1">🚫 Do Not Bother</div>`;
         } else {
             const purchaseInfo = site.visited && site.purchaseType ? `
                 <div class="mt-1 p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm flex justify-between items-center">
@@ -116,11 +111,16 @@ function renderList() {
                     <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${site.id}')">Undo</button>
                 </div>
             ` : '';
-
-            const actionButtons = !site.visited ? buildActionHTML(site.id) : '';
-
-            innerHTML += purchaseInfo + actionButtons;
+            bodyHTML = purchaseInfo + (!site.visited ? buildActionHTML(site.id, true, site.id) : '');
         }
+
+        const innerHTML = `
+            <div class="flex justify-between items-center mb-1 cursor-pointer" onclick="toggleCard('${site.id}')">
+                <div class="text-lg font-bold text-gray-800">${site.id} - ${site.name}</div>
+                <div class="flex items-center gap-2">${statusBadge}</div>
+            </div>
+            <div id="body-${site.id}" class="hidden">${bodyHTML}</div>
+        `;
 
         card.innerHTML = innerHTML;
         sitesList.appendChild(card);
@@ -136,16 +136,6 @@ function renderList() {
                 extraStatusBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Visited</span>`;
             }
 
-            let extraHTML = `
-                <div class="flex justify-between items-center mb-1">
-                    <div class="text-base font-bold text-orange-800">📎 Extra @ ${extra.parentId}</div>
-                    <div class="flex items-center gap-2">
-                        ${extraStatusBadge}
-                        <button onclick="removeExtra('${extra.id}')" class="text-xs text-red-500 font-bold px-2 py-1 bg-red-50 border border-red-200 rounded">✕</button>
-                    </div>
-                </div>
-            `;
-
             const extraPurchaseInfo = extra.visited && extra.purchaseType ? `
                 <div class="mt-1 p-2 bg-white rounded-lg border border-orange-200 text-sm flex justify-between items-center">
                     <div>
@@ -155,10 +145,19 @@ function renderList() {
                     <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${extra.id}')">Undo</button>
                 </div>
             ` : '';
+            const extraBodyHTML = extraPurchaseInfo + (!extra.visited ? buildActionHTML(extra.id, false) : '');
 
-            const extraActionButtons = !extra.visited ? buildActionHTML(extra.id, false) : '';
+            const extraHTML = `
+                <div class="flex justify-between items-center mb-1 cursor-pointer" onclick="toggleCard('${extra.id}')">
+                    <div class="text-base font-bold text-orange-800">📎 Extra @ ${extra.parentId}</div>
+                    <div class="flex items-center gap-2">
+                        ${extraStatusBadge}
+                        <button onclick="event.stopPropagation(); removeExtra('${extra.id}')" class="text-xs text-red-500 font-bold px-2 py-1 bg-red-50 border border-red-200 rounded">✕</button>
+                    </div>
+                </div>
+                <div id="body-${extra.id}" class="hidden">${extraBodyHTML}</div>
+            `;
 
-            extraHTML += extraPurchaseInfo + extraActionButtons;
             extraCard.innerHTML = extraHTML;
             sitesList.appendChild(extraCard);
         });
@@ -217,6 +216,11 @@ window.cancelPayment = function(id) {
     const paymentDiv = document.getElementById(`payment-${id}`);
     paymentDiv.classList.add('hidden');
     paymentDiv.classList.remove('flex');
+}
+
+window.toggleCard = function(id) {
+    const body = document.getElementById(`body-${id}`);
+    if (body) body.classList.toggle('hidden');
 }
 
 window.addExtra = function(parentId) {

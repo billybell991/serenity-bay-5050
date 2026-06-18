@@ -6579,7 +6579,7 @@ const s2Marker = L.marker(s2Center, { icon: L.divIcon({ className: 'naked-site-l
 // --- SITE S3 ---
 const s3Center = [208.1, 1619.7];
 const s3AreaCoords = [[163.5,1574.5],[241.4,1568.6],[255.1,1665.5],[179,1666.7]];
-const s3Poly = L.polygon(s3AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>Site S3</b>");
+const s3Poly = L.polygon(s3AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>S3 - Steve & Caroline</b>");
 const s3Marker = L.marker(s3Center, { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">S3</div>', iconSize: [60,60], iconAnchor: [30,30] }), interactive: false}).addTo(map);
 
 // --- SITE S4 ---

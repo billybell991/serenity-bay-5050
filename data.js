@@ -87,7 +87,7 @@ const defaultCampsites = [
     // S Section
     { id: "S1", name: "Don & Julie", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "S2", name: "Angie & Pat", visited: false, doNotBother: false, purchaseType: null, amount: null },
-    { id: "S3", name: "Vacant", visited: false, doNotBother: false, purchaseType: null, amount: null },
+    { id: "S3", name: "Steve & Caroline", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "S4", name: "Wade & Monique", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "S5", name: "Sonya & Colin", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "S6", name: "Paula & Peter", visited: false, doNotBother: false, purchaseType: null, amount: null },

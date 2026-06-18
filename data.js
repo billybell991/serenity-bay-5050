@@ -53,7 +53,7 @@ const defaultCampsites = [
     { id: "P20", name: "Joan & Doug", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "P21", name: "Jason Gray", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "P22", name: "Remi & Sylvie", visited: false, doNotBother: false, purchaseType: null, amount: null },
-    { id: "P23", name: "Doug & Karen", visited: false, doNotBother: false, purchaseType: null, amount: null },
+    { id: "P23", name: "Doug & Karen", visited: false, doNotBother: true, purchaseType: null, amount: null },
     { id: "P25", name: "Belinda & Sam", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "P26", name: "Joanne & Chris & Josee", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "P27", name: "Tedra & Clayton", visited: false, doNotBother: false, purchaseType: null, amount: null },

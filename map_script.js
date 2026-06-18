@@ -5931,9 +5931,9 @@ L.marker([293, 95], {
 
 // --- LOWER FIELD and NEW PARKING ---
 
-const centerFieldMarker = L.marker([776.4, 1682.9], { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label" style="white-space: nowrap; font-weight: bold; text-shadow: 1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff;">CENTER FIELD</div>', iconSize: [200, 40], iconAnchor: [100, 20] })}).addTo(map).bindPopup("<b>Center Field</b>");
+const centerFieldMarker = L.marker([776.4, 1682.9], { interactive: false, icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label" style="white-space: nowrap; font-weight: bold; text-shadow: 1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff;">CENTER FIELD</div>', iconSize: [200, 40], iconAnchor: [100, 20] })}).addTo(map);
 
-const lowerFieldMarker = L.marker([500, 2179], { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label" style="white-space: nowrap; font-weight: bold; text-shadow: 1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff;">LOWER FIELD</div>', iconSize: [200, 40], iconAnchor: [100, 20] })}).addTo(map).bindPopup("<b>Lower Field</b>");
+const lowerFieldMarker = L.marker([500, 2179], { interactive: false, icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label" style="white-space: nowrap; font-weight: bold; text-shadow: 1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff;">LOWER FIELD</div>', iconSize: [200, 40], iconAnchor: [100, 20] })}).addTo(map);
 
 
 const parkingMiddleEmojiMarker = L.marker([1369, 696], {

@@ -15,9 +15,9 @@ const defaultCampsites = [
     { id: "B11", name: "Julie & Stephane", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "B12", name: "Danielle & Christian", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "B13", name: "Brandon & Mellisa", visited: false, doNotBother: false, purchaseType: null, amount: null },
-    { id: "B14", name: "Devin & Blair", visited: false, doNotBother: false, purchaseType: null, amount: null },
+    { id: "B14", name: "Deanna & Drew", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "B15", name: "Andy & Kelly", visited: false, doNotBother: false, purchaseType: null, amount: null },
-    { id: "B16", name: "Deanna & Drew", visited: false, doNotBother: false, purchaseType: null, amount: null },
+    { id: "B16", name: "Devin & Blair", visited: false, doNotBother: false, purchaseType: null, amount: null },
     { id: "B17", name: "Jenn & Marcel", visited: false, doNotBother: false, purchaseType: null, amount: null },
 
     // L Section

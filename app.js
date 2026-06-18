@@ -926,6 +926,19 @@ window.updateMapColors = function() {
             layer.setStyle({ fillColor: '#fecdd3', fillOpacity: 1 });
         }
     });
+    // P45 and P46 are the same household — both mirror P45/P46's color
+    if (window.sitePolygons['P45'] && window.sitePolygons['P46']) {
+        const p4546 = campgroundData.find(s => s.id === 'P45/P46');
+        if (p4546) {
+            let col = '#D1D5DB', op = 0.9;
+            if (p4546.doNotBother)                                    { col = '#4B5563'; op = 0.85; }
+            else if (p4546.visited && p4546.purchaseType === 'Cash')      { col = '#bbf7d0'; op = 1; }
+            else if (p4546.visited && p4546.purchaseType === 'eTransfer') { col = '#bfdbfe'; op = 1; }
+            else if (p4546.visited && p4546.purchaseType === 'None')      { col = '#fecdd3'; op = 1; }
+            window.sitePolygons['P45'].setStyle({ fillColor: col, fillOpacity: op });
+            window.sitePolygons['P46'].setStyle({ fillColor: col, fillOpacity: op });
+        }
+    }
     // T4 and T5 are the same household — T5 mirrors T4/T5's color
     if (window.sitePolygons['T4'] && window.sitePolygons['T5']) {
         const t45 = campgroundData.find(s => s.id === 'T4/T5');
@@ -947,7 +960,8 @@ window.hookMapPolygons = function() {
         layer.off('click');
         layer.unbindPopup();
         // T4 and T5 are the same household — both open T4/T5's modal
-        const targetId = (siteId === 'T5' || siteId === 'T4') ? 'T4/T5' : siteId;
+        // P45 and P46 are the same household — both open P45/P46's modal
+        const targetId = (siteId === 'T5' || siteId === 'T4') ? 'T4/T5' : (siteId === 'P45' || siteId === 'P46') ? 'P45/P46' : siteId;
         layer.on('click', (e) => {
             L.DomEvent.stopPropagation(e);
             window.openSiteModal(targetId);

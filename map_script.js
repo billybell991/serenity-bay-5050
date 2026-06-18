@@ -7060,13 +7060,13 @@ const p44Marker = L.marker(p44Center, { icon: L.divIcon({ className: 'naked-site
 // --- SITE P45 ---
 const p45Center = [744.1, 2337.2];
 const p45AreaCoords = [[717, 2291.4], [768.6, 2288.2], [769.3, 2389], [716.7, 2390.7]];
-const p45Poly = L.polygon(p45AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>Site P45</b>");
+const p45Poly = L.polygon(p45AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>P45/P46 - Doug & Lena</b>");
 const p45Marker = L.marker(p45Center, { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">P45</div>', iconSize: [60,60], iconAnchor: [30,30] }), interactive: false}).addTo(map);
 
 // --- SITE P46 ---
 const p46Center = [689.9, 2338.4];
 const p46AreaCoords = [[662.9, 2293.9], [717, 2291.4], [716.7, 2390.7], [662.2, 2391.1]];
-const p46Poly = L.polygon(p46AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>Site P46</b>");
+const p46Poly = L.polygon(p46AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>P45/P46 - Doug & Lena</b>");
 const p46Marker = L.marker(p46Center, { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">P46</div>', iconSize: [60,60], iconAnchor: [30,30] }), interactive: false}).addTo(map);
 
 // --- PARKING (near P37/P38 area) ---

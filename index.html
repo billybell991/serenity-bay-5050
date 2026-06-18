@@ -34,17 +34,26 @@
             position: relative;
             z-index: 1;
         }
+        /* Remove default Leaflet stroke outline from site polygons */
+        .organic-polygon path { stroke: none !important; }
     </style>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Leaflet Geoman CSS (Drawing Tools) -->
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css" />
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="pb-28 text-gray-900">
 
     <!-- Fixed Header -->
     <header class="bg-blue-600 text-white p-4 sticky top-0 z-20 text-center shadow-md">
-        <h1 class="text-2xl font-bold">🎟️ Serenity Bay 50/50 🎟️</h1>
+        <h1 class="text-2xl font-bold">&#127903;&#65039; Serenity Bay 50/50 &#127903;&#65039;</h1>
     </header>
 
     <!-- Search/Filter -->
-    <div class="p-4 sticky top-[60px] bg-gray-100 z-10 border-b border-gray-200">
+    <div id="searchContainer" class="p-4 sticky top-[60px] bg-gray-100 z-10 border-b border-gray-200">
         <input 
             type="text" 
             id="searchSite" 
@@ -57,18 +66,26 @@
     <div id="sitesList" class="p-4">
         <!-- Site cards injected here by app.js -->
     </div>
+
+    <!-- Map Container -->
+    <div id="mapContainer" class="hidden fixed inset-0 top-[60px] bottom-[86px] bg-black z-30">
+        <div class="w-full h-full relative" id="map">
+            <!-- Leaflet map goes here -->
+        </div>
+    </div>
+
     <!-- Fixed Bottom Nav -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 p-3 z-40 flex justify-between gap-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-        <button id="mapBtn" class="flex-1 bg-purple-100 text-purple-800 active:bg-purple-200 py-2 rounded-lg font-bold flex flex-col items-center justify-center border border-purple-200 shadow-sm">
-            <span class="text-2xl mb-1 mt-1">🗺️</span>
-            <span class="text-sm">Map</span>
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 p-3 z-40 flex justify-between gap-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] text-[0px]">
+        <button id="viewToggleBtn" class="flex-1 bg-purple-100 text-purple-800 active:bg-purple-200 py-2 rounded-lg font-bold flex flex-col items-center justify-center border border-purple-200 shadow-sm leading-none">
+            <span id="viewToggleIcon" class="text-2xl mb-2 mt-1">&#128506;&#65039;</span>
+            <span id="viewToggleText" class="text-sm">Map</span>
         </button>
         <button id="tallyBtn" class="flex-1 bg-green-100 text-green-800 active:bg-green-200 py-2 rounded-lg font-bold flex flex-col items-center justify-center border border-green-200 shadow-sm">
-            <span class="text-2xl mb-1 mt-1">📊</span>
+            <span class="text-2xl mb-1 mt-1">&#128202;</span>
             <span class="text-sm">Tally</span>
         </button>
         <button id="helpBtn" class="flex-1 bg-blue-100 text-blue-800 active:bg-blue-200 py-2 rounded-lg font-bold flex flex-col items-center justify-center border border-blue-200 shadow-sm">
-            <span class="text-2xl mb-1 mt-1">❓</span>
+            <span class="text-2xl mb-1 mt-1">&#10067;</span>
             <span class="text-sm">How To</span>
         </button>
     </nav>
@@ -90,7 +107,7 @@
     <!-- Tally Modal overlay -->
     <div id="tallyModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 justify-center items-center p-4">
         <div class="bg-white rounded-xl p-8 max-w-sm w-full flex flex-col">
-            <h2 class="text-2xl font-bold mb-4 text-center border-b pb-2">📊 Live Tally</h2>
+            <h2 class="text-2xl font-bold mb-4 text-center border-b pb-2">&#128202; Live Tally</h2>
             <div id="tallyContent" class="space-y-4 mb-6 text-gray-700">
                 <!-- Tally content injected here -->
             </div>
@@ -101,76 +118,124 @@
     <!-- Help / How To Modal -->
     <div id="helpModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 justify-center items-start p-4 overflow-y-auto">
         <div class="bg-white rounded-xl p-6 max-w-sm w-full my-4">
-            <h2 class="text-2xl font-bold mb-4 text-center border-b pb-2">❓ How To Use This App</h2>
+            <h2 class="text-2xl font-bold mb-4 text-center border-b pb-2">&#10067; How To Use This App</h2>
 
             <div class="space-y-5 text-gray-700 mb-6">
 
                 <div>
-                    <h3 class="font-bold text-blue-700 text-lg mb-1">🎟️ Selling Tickets</h3>
-                    <p class="text-sm leading-relaxed">Find the camper's site in the list — or type their site number (like <strong>B4</strong>) in the search box at the top. Tap their card, then tap <strong>Cash</strong> or <strong>eTransfer</strong>, then choose the dollar amount. The site will be marked ✅ Visited!</p>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#127903;&#65039; Selling Tickets</h3>
+                    <p class="text-sm leading-relaxed">Find the camper's site in the list &#8212; or type their site number (like <strong>B4</strong>) in the search box at the top. Tap their card, then tap <strong>Cash</strong> or <strong>eTransfer</strong>, then choose the dollar amount. The site will be marked &#9989; Visited!</p>
                 </div>
 
                 <div>
-                    <h3 class="font-bold text-blue-700 text-lg mb-1">➕ Multiple Buyers at One Site</h3>
-                    <p class="text-sm leading-relaxed">If more than one person at the same site wants to buy tickets, tap <strong>➕ Add Extra</strong> on their site card. A new entry — labelled <strong>📎 Extra @ [site]</strong> — will appear right below it with its own Cash / eTransfer buttons. You can add as many extras as needed. To remove one, tap the <strong>✕</strong> button on the extra card.</p>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#10133; Multiple Buyers at One Site</h3>
+                    <p class="text-sm leading-relaxed">If more than one person at the same site wants to buy tickets, tap <strong>&#10133; Add Extra</strong> on their site card. A new entry &#8212; labelled <strong>&#128206; Extra @ [site]</strong> &#8212; will appear right below it with its own Cash / eTransfer buttons. You can add as many extras as needed. To remove one, tap the <strong>&#10005;</strong> button on the extra card.</p>
                 </div>
 
                 <div>
-                    <h3 class="font-bold text-blue-700 text-lg mb-1">↩️ Made a Mistake?</h3>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#8617;&#65039; Made a Mistake?</h3>
                     <p class="text-sm leading-relaxed">No problem! Tap the <strong>Undo</strong> button next to any visited site to reset it back to unvisited. Then you can re-enter it correctly.</p>
                 </div>
 
                 <div>
-                    <h3 class="font-bold text-blue-700 text-lg mb-1">🚫 Do Not Bother Sites</h3>
-                    <p class="text-sm leading-relaxed">Some sites are marked <strong>🚫 Do Not Bother</strong> — these campers have asked not to be visited. They'll appear grayed out in the list.</p>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#128683; Do Not Bother Sites</h3>
+                    <p class="text-sm leading-relaxed">Some sites are marked <strong>&#128683; Do Not Bother</strong> &#8212; these campers have asked not to be visited. They'll appear grayed out in the list.</p>
                 </div>
 
                 <div>
-                    <h3 class="font-bold text-blue-700 text-lg mb-1">📊 Check the Tally</h3>
-                    <p class="text-sm leading-relaxed">Tap the <strong>Tally</strong> button at the bottom anytime to see the running totals — cash collected, eTransfer, gross raised, and what the 50/50 prize would be right now!</p>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#128202; Check the Tally</h3>
+                    <p class="text-sm leading-relaxed">Tap the <strong>Tally</strong> button at the bottom anytime to see the running totals &#8212; cash collected, eTransfer, gross raised, and what the 50/50 prize would be right now!</p>
                 </div>
 
                 <div>
-                    <h3 class="font-bold text-blue-700 text-lg mb-1">🗺️ Park Map</h3>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#128506;&#65039; Park Map</h3>
                     <p class="text-sm leading-relaxed">Tap the <strong>Map</strong> button to see the full campground map. Use two fingers to <strong>pinch and zoom</strong> in on any area!</p>
                 </div>
 
                 <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
-                    <h3 class="font-bold text-amber-700 text-lg mb-2">📱 Add This App to Your Home Screen</h3>
+                    <h3 class="font-bold text-amber-700 text-lg mb-2">&#128241; Add This App to Your Home Screen</h3>
                     <p class="text-sm font-bold text-gray-700 mb-1">On iPhone (use Safari):</p>
-                    <p class="text-sm leading-relaxed mb-3">1. Open this page in <strong>Safari</strong><br>2. Tap the <strong>Share</strong> button at the bottom (the square with an arrow pointing up ⬆️)<br>3. Scroll down and tap <strong>"Add to Home Screen"</strong><br>4. Tap <strong>Add</strong> — it'll appear just like a real app!</p>
+                    <p class="text-sm leading-relaxed mb-3">1. Open this page in <strong>Safari</strong><br>2. Tap the <strong>Share</strong> button at the bottom (the square with an arrow pointing up &#11014;&#65039;)<br>3. Scroll down and tap <strong>"Add to Home Screen"</strong><br>4. Tap <strong>Add</strong> &#8212; it'll appear just like a real app!</p>
                     <p class="text-sm font-bold text-gray-700 mb-1">On Android (use Chrome):</p>
-                    <p class="text-sm leading-relaxed">1. Tap the <strong>⋮ menu</strong> (three dots in the top-right corner)<br>2. Tap <strong>"Add to Home Screen"</strong><br>3. Tap <strong>Add</strong> — you're done!</p>
+                    <p class="text-sm leading-relaxed">1. Tap the <strong>&#8942; menu</strong> (three dots in the top-right corner)<br>2. Tap <strong>"Add to Home Screen"</strong><br>3. Tap <strong>Add</strong> &#8212; you're done!</p>
                 </div>
 
             </div>
 
             <!-- Export Section -->
             <div class="border-t pt-4 mb-3">
-                <p class="text-xs text-gray-400 text-center mb-2">— Admin only —</p>
-                <button id="exportFromHelpBtn" class="w-full py-3 bg-blue-50 text-blue-700 rounded-lg font-bold border border-blue-200 text-sm mb-2">📥 Export Full Report to Excel</button>
-                <button id="resetAllBtnHelp" class="w-full py-2 bg-red-50 text-red-600 rounded-lg font-semibold text-sm border border-red-200">⚠️ Reset All Data</button>
+                <p class="text-xs text-gray-400 text-center mb-2">&#8212; Admin only &#8212;</p>
+                <button id="exportFromHelpBtn" class="w-full py-3 bg-blue-50 text-blue-700 rounded-lg font-bold border border-blue-200 text-sm mb-2">&#128229; Export Full Report to Excel</button>
+                <button id="resetAllBtnHelp" class="w-full py-2 bg-red-50 text-red-600 rounded-lg font-semibold text-sm border border-red-200">&#9888;&#65039; Reset All Data</button>
             </div>
 
             <button id="closeHelp" class="w-full py-3 bg-gray-200 text-gray-800 rounded-lg font-bold">Close</button>
         </div>
     </div>
 
-    <!-- Map Modal overlay -->
-    <div id="mapModal" class="hidden fixed inset-0 bg-black z-50 flex-col pb-20">
-        <div class="flex justify-between items-center p-4 bg-gray-900 text-white shadow-md z-10">
-            <h2 class="text-lg font-bold">Park Map (Pinch to Zoom)</h2>
-            <button id="closeMap" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold border border-gray-600">Close</button>
+    <!-- Undo Entry Confirmation Modal -->
+    <div id="undoConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-[60] flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl p-5 max-w-xs w-full shadow-2xl">
+            <h2 class="text-base font-bold text-gray-800 mb-1">&#8617;&#65039; Undo this entry?</h2>
+            <p class="text-sm text-gray-500 mb-2">This will clear the site back to unvisited.</p>
+            <p id="undoConfirmExtrasWarning" class="hidden text-sm font-semibold text-amber-600 mb-3"></p>
+            <div class="flex gap-2">
+                <button id="undoConfirmCancel" class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm">Cancel</button>
+                <button id="undoConfirmGo" class="flex-1 py-2 bg-red-500 text-white rounded-lg font-bold text-sm">Yes, Undo</button>
+            </div>
         </div>
-        <div class="flex-1 overflow-hidden p-0 bg-black relative" id="mapContainer">
-            <img src="map.png" alt="Park Map" class="w-full h-auto object-contain origin-top-left" id="mapImage" />
+    </div>
+
+    <!-- Reset All Data — Password Modal -->
+    <div id="resetPasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-[60] flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-2xl">
+            <h2 class="text-lg font-bold text-red-600 mb-1">&#9888;&#65039; Reset All Data</h2>
+            <p class="text-sm text-gray-500 mb-4">Enter the admin password to continue.</p>
+            <input id="resetPasswordInput" type="password" placeholder="Password"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-base mb-1 focus:outline-none focus:ring-2 focus:ring-red-300"
+                autocomplete="off" autocorrect="off" autocapitalize="off" />
+            <p id="resetPasswordError" class="text-red-500 text-xs mb-3 hidden">Incorrect password. Try again.</p>
+            <div class="flex gap-2">
+                <button id="resetPasswordCancel" class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm">Cancel</button>
+                <button id="resetPasswordSubmit" class="flex-1 py-2 bg-red-500 text-white rounded-lg font-semibold text-sm">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset All Data — Final Confirmation Modal -->
+    <div id="resetConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-[60] flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-2xl">
+            <h2 class="text-lg font-bold text-red-600 mb-2">&#128721; Are you absolutely sure?</h2>
+            <p class="text-sm text-gray-600 mb-1">This will erase <strong>ALL</strong> of this week&#39;s data.</p>
+            <p class="text-sm font-bold text-red-500 mb-5">This <u>cannot</u> be undone.</p>
+            <div class="flex gap-2">
+                <button id="resetConfirmCancel" class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm">Cancel</button>
+                <button id="resetConfirmGo" class="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold text-sm">Yes, Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Action Bottom Sheet (Map Target) -->
+    <div id="siteActionModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex-col justify-end p-0">
+        <div id="siteActionSheet" class="bg-white rounded-t-2xl p-6 w-full max-w-md mx-auto transition-transform transform translate-y-full duration-300 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <div class="mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
+                <h2 class="text-2xl font-bold text-gray-800" id="sa-title">Site</h2>
+            </div>
+            <div id="sa-content" class="pb-4">
+                <!-- Content injected here -->
+            </div>
         </div>
     </div>
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Leaflet Geoman JS (Drawing Tools) -->
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.min.js"></script>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -189,5 +254,6 @@
 
     <script src="data.js"></script>
     <script src="app.js"></script>
+    <script src="map_script.js"></script>
 </body>
 </html>

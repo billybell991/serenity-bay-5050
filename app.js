@@ -13,9 +13,8 @@ dataRef.on('value', (snapshot) => {
         dataRef.set(defaultCampsites);
     }
     renderList();
+    if (window.hookMapPolygons) window.hookMapPolygons();
 });
-
-// Global Variables
 let currentFilter = '';
 let qrCodeInstance = null;
 
@@ -34,31 +33,30 @@ const closeTallyBtn = document.getElementById('closeTally');
 const tallyBtn = document.getElementById('tallyBtn');
 const tallyContent = document.getElementById('tallyContent');
 const resetAllBtnHelp = document.getElementById('resetAllBtnHelp');
-const mapBtn = document.getElementById('mapBtn');
-const mapModal = document.getElementById('mapModal');
-const closeMapBtn = document.getElementById('closeMap');
+const mapContainer = document.getElementById('mapContainer');
+const siteListContainer = document.getElementById('sitesList');
+const searchContainer = document.getElementById('searchContainer');
+const viewToggleBtn = document.getElementById('viewToggleBtn');
+const viewToggleIcon = document.getElementById('viewToggleIcon');
+const viewToggleText = document.getElementById('viewToggleText');
+let mapVisible = false;
 
 // Build the action buttons HTML — shared between regular sites and extras
 function buildActionHTML(id, showSkip = true, addExtraId = null) {
-    // Full 2x2 grid: Cash & eTrans on top, No & Extra on bottom
     if (showSkip && addExtraId) {
         return `
         <div class="grid grid-cols-2 gap-3 mt-3" id="actions-${id}">
-            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-4 bg-green-100 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-200 active:bg-green-200">
+            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-4 bg-green-200 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-300 active:bg-green-300">
                 <span class="text-2xl mb-1">💵</span>
                 <span class="text-sm">Cash</span>
             </button>
-            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-4 bg-blue-100 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-200 active:bg-blue-200">
+            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-4 bg-blue-200 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-300 active:bg-blue-300">
                 <span class="text-2xl mb-1">📱</span>
                 <span class="text-sm">eTransfer</span>
             </button>
-            <button onclick="setVisited('${id}', 'None')" class="py-4 bg-gray-100 text-gray-700 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-gray-200 active:bg-gray-200">
+            <button onclick="setVisited('${id}', 'None')" class="col-span-2 py-4 bg-rose-100 text-rose-700 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-rose-200 active:bg-rose-200">
                 <span class="text-2xl mb-1">🚫</span>
                 <span class="text-sm">No</span>
-            </button>
-            <button onclick="addExtra('${addExtraId}')" class="py-4 bg-orange-50 text-orange-700 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-orange-200 active:bg-orange-100">
-                <span class="text-2xl mb-1">➕</span>
-                <span class="text-sm">Add Extra</span>
             </button>
         </div>
         <div class="hidden gap-2 mt-2 flex-col" id="payment-${id}">
@@ -80,11 +78,11 @@ function buildActionHTML(id, showSkip = true, addExtraId = null) {
     // Extras: just Cash + eTrans in a 2-col row
     return `
         <div class="grid grid-cols-2 gap-3 mt-3" id="actions-${id}">
-            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-4 bg-green-100 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-200 active:bg-green-200">
+            <button onclick="showAmountOptions('${id}', 'Cash')" class="py-4 bg-green-200 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-300 active:bg-green-300">
                 <span class="text-2xl mb-1">💵</span>
                 <span class="text-sm">Cash</span>
             </button>
-            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-4 bg-blue-100 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-200 active:bg-blue-200">
+            <button onclick="showAmountOptions('${id}', 'eTransfer')" class="py-4 bg-blue-200 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-300 active:bg-blue-300">
                 <span class="text-2xl mb-1">📱</span>
                 <span class="text-sm">eTransfer</span>
             </button>
@@ -125,7 +123,12 @@ function renderList() {
 
     filtered.forEach(site => {
         const card = document.createElement('div');
-        card.className = `site-card ${site.doNotBother ? 'opacity-60 bg-gray-200 border-red-300' : (site.visited ? 'card-visited bg-gray-50' : 'bg-white')}`;
+        card.className = `site-card cursor-pointer ${site.doNotBother ? 'opacity-60 bg-gray-200 border-red-300' : (site.visited ? 'card-visited' : 'bg-white')}`;
+        if (site.visited && !site.doNotBother) {
+            const bgMap = { 'Cash': '#bbf7d0', 'eTransfer': '#bfdbfe', 'None': '#fecdd3' };
+            card.style.backgroundColor = bgMap[site.purchaseType] || '#f9fafb';
+        }
+        card.addEventListener('click', function(e) { if (!e.target.closest('button, input, select, a')) toggleCard(site.id); });
         
         let statusBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Pending</span>`;
         if (site.visited) {
@@ -137,19 +140,19 @@ function renderList() {
             bodyHTML = `<div class="text-sm font-bold text-red-600 mb-1">🚫 Do Not Bother</div>`;
         } else {
             const purchaseInfo = site.visited && site.purchaseType ? `
-                <div class="mt-1 p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm flex justify-between items-center">
-                    <div>
-                        <span class="font-bold">Status:</span> ${site.purchaseType} 
-                        ${site.amount ? ` - $${site.amount}` : ''}
+                <div class="mt-1 p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                    <div class="flex justify-between items-center">
+                        <div><span class="font-bold">Status:</span> ${site.purchaseType}${site.amount ? ` - $${site.amount}` : ''}</div>
+                        <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="confirmReset('${site.id}')">Undo</button>
                     </div>
-                    <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${site.id}')">Undo</button>
+                    ${site.purchaseType !== 'None' ? `<button onclick="addExtra('${site.id}')" class="undo-btn mt-2 w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm border border-orange-200 active:bg-orange-200">&#x2795; Add Extra</button>` : ''}
                 </div>
             ` : '';
             bodyHTML = purchaseInfo + (!site.visited ? buildActionHTML(site.id, true, site.id) : '');
         }
 
         const innerHTML = `
-            <div class="flex justify-between items-center mb-1 cursor-pointer" onclick="toggleCard('${site.id}')">
+            <div class="flex justify-between items-center mb-1">
                 <div class="text-lg font-bold text-gray-800">${site.id} - ${site.name}</div>
                 <div class="flex items-center gap-2">${statusBadge}</div>
             </div>
@@ -176,7 +179,7 @@ function renderList() {
                         <span class="font-bold">Status:</span> ${extra.purchaseType}
                         ${extra.amount ? ` - $${extra.amount}` : ''}
                     </div>
-                    <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="resetSite('${extra.id}')">Undo</button>
+                    <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="confirmReset('${extra.id}')">Undo</button>
                 </div>
             ` : '';
             const extraBodyHTML = extraPurchaseInfo + (!extra.visited ? buildActionHTML(extra.id, false) : '');
@@ -209,17 +212,29 @@ window.setVisited = function(id, type, amount = 0) {
         site.amount = amount;
         saveData();
         renderList();
+        // Re-expand the card so the user can see Add Extra / Undo without re-tapping
+        toggleCard(id);
+        if (window.updateMapColors) window.updateMapColors();
+        const refreshId = site.isExtra ? site.parentId : id;
+        if (currentMapSiteId === refreshId) window.openSiteModal(refreshId);
     }
 }
 
 window.resetSite = function(id) {
     const site = campgroundData.find(s => s.id === id);
-    if(site) {
+    if (site) {
         site.visited = false;
         site.purchaseType = null;
         site.amount = null;
+        // If this is a main site, also remove all its extras entirely
+        if (!site.isExtra) {
+            campgroundData = campgroundData.filter(s => !(s.isExtra && s.parentId === id));
+        }
         saveData();
         renderList();
+        if (window.updateMapColors) window.updateMapColors();
+        const refreshId = site.isExtra ? site.parentId : id;
+        if (currentMapSiteId === refreshId) window.openSiteModal(refreshId);
     }
 }
 
@@ -291,6 +306,10 @@ window.addExtra = function(parentId) {
     });
     saveData();
     renderList();
+    // Keep parent card open and auto-expand the new extra card
+    const parentBody = document.getElementById(`body-${parentId}`);
+    if (parentBody) parentBody.classList.remove('hidden');
+    toggleCard(newId);
 }
 
 window.removeExtra = function(id) {
@@ -505,6 +524,12 @@ closeHelpBtn.addEventListener('click', () => {
     helpModal.classList.add('hidden');
     helpModal.classList.remove('flex');
 });
+helpModal.addEventListener('click', (e) => {
+    if (e.target === helpModal) {
+        helpModal.classList.add('hidden');
+        helpModal.classList.remove('flex');
+    }
+});
 
 exportFromHelpBtn.addEventListener('click', exportToExcel);
 
@@ -549,15 +574,43 @@ closeTallyBtn.addEventListener('click', () => {
     tallyModal.classList.remove('flex');
 });
 
-function doResetAll() {
-    const pw = prompt("Enter admin password to reset data:");
-    if (pw !== "serenity2026") {
-        if (pw !== null) alert("Incorrect password.");
-        return;
-    }
-    if (!confirm("⚠️ This will erase ALL of this week's data — are you sure?")) return;
-    if (!confirm("🛑 Make sure you're sure!! This CANNOT be undone. Proceed?")) return;
-    // Remove all extra entries entirely, then reset regular sites
+// ── Reset All Data — modal-driven (iOS-safe, no prompt/confirm) ──────────────
+const resetPasswordModal  = document.getElementById('resetPasswordModal');
+const resetPasswordInput  = document.getElementById('resetPasswordInput');
+const resetPasswordError  = document.getElementById('resetPasswordError');
+const resetPasswordCancel = document.getElementById('resetPasswordCancel');
+const resetPasswordSubmit = document.getElementById('resetPasswordSubmit');
+const resetConfirmModal   = document.getElementById('resetConfirmModal');
+const resetConfirmCancel  = document.getElementById('resetConfirmCancel');
+const resetConfirmGo      = document.getElementById('resetConfirmGo');
+
+function showResetPasswordModal() {
+    resetPasswordInput.value = '';
+    resetPasswordError.classList.add('hidden');
+    resetPasswordModal.classList.remove('hidden');
+    resetPasswordModal.classList.add('flex');
+    // Small delay so the modal is visible before keyboard opens on mobile
+    setTimeout(() => resetPasswordInput.focus(), 100);
+}
+
+function hideResetPasswordModal() {
+    resetPasswordModal.classList.add('hidden');
+    resetPasswordModal.classList.remove('flex');
+    resetPasswordInput.value = '';
+    resetPasswordError.classList.add('hidden');
+}
+
+function showResetConfirmModal() {
+    resetConfirmModal.classList.remove('hidden');
+    resetConfirmModal.classList.add('flex');
+}
+
+function hideResetConfirmModal() {
+    resetConfirmModal.classList.add('hidden');
+    resetConfirmModal.classList.remove('flex');
+}
+
+function executeReset() {
     campgroundData = campgroundData.filter(s => !s.isExtra);
     campgroundData.forEach(site => {
         site.visited = false;
@@ -572,35 +625,92 @@ function doResetAll() {
     helpModal.classList.remove('flex');
 }
 
-resetAllBtnHelp.addEventListener('click', doResetAll);
+resetAllBtnHelp.addEventListener('click', showResetPasswordModal);
 
-let pz;
-mapBtn.addEventListener('click', () => {
-    mapModal.classList.remove('hidden');
-    mapModal.classList.add('flex');
-    
-    // Initialize panzoom only after the modal is visible so it calculates boundaries correctly
-    if (!pz) {
-        const mapImage = document.getElementById('mapImage');
-        pz = panzoom(mapImage, {
-            maxZoom: 6,
-            minZoom: 0.5,
-            bounds: true,
-            boundsPadding: 0.1
-        });
+resetPasswordCancel.addEventListener('click', hideResetPasswordModal);
+resetPasswordModal.addEventListener('click', (e) => {
+    if (e.target === resetPasswordModal) hideResetPasswordModal();
+});
+
+resetPasswordSubmit.addEventListener('click', () => {
+    if (resetPasswordInput.value === 'serenity2026') {
+        hideResetPasswordModal();
+        showResetConfirmModal();
+    } else {
+        resetPasswordError.classList.remove('hidden');
+        resetPasswordInput.value = '';
+        resetPasswordInput.focus();
     }
 });
 
-closeMapBtn.addEventListener('click', () => {
-    mapModal.classList.add('hidden');
-    mapModal.classList.remove('flex');
+// Allow pressing Enter in the password field to submit
+resetPasswordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') resetPasswordSubmit.click();
+});
+
+resetConfirmCancel.addEventListener('click', hideResetConfirmModal);
+resetConfirmModal.addEventListener('click', (e) => {
+    if (e.target === resetConfirmModal) hideResetConfirmModal();
+});
+
+resetConfirmGo.addEventListener('click', () => {
+    hideResetConfirmModal();
+    executeReset();
+});
+
+viewToggleBtn.addEventListener('click', () => {
+    mapVisible = !mapVisible;
+    if (mapVisible) {
+        mapContainer.classList.remove('hidden');
+        siteListContainer.classList.add('hidden');
+        searchContainer.classList.add('hidden');
+        viewToggleIcon.innerText = '📋';
+        viewToggleText.innerText = 'List';
+        setTimeout(() => {
+            if (window._leafletMap) {
+                window._leafletMap.invalidateSize({ animate: false });
+                const savedZoom = localStorage.getItem('mapZoom');
+                const savedLat  = localStorage.getItem('mapLat');
+                const savedLng  = localStorage.getItem('mapLng');
+                if (savedZoom && savedLat && savedLng) {
+                    window._leafletMap.setView(
+                        [parseFloat(savedLat), parseFloat(savedLng)],
+                        parseFloat(savedZoom),
+                        { animate: false }
+                    );
+                } else {
+                    // Fit to container HEIGHT so the map fills the screen (user pans left/right)
+                    const sz = window._leafletMap.getSize();
+                    const zoom = Math.log2(sz.y / 1790);
+                    window._leafletMap.setView([895, 1200], zoom);
+                }
+                // Start persisting position now that the map is properly sized
+                if (!window._mapMoveListenerAttached) {
+                    window._mapMoveListenerAttached = true;
+                    window._leafletMap.on('moveend', function() {
+                        const c = window._leafletMap.getCenter();
+                        localStorage.setItem('mapZoom', window._leafletMap.getZoom());
+                        localStorage.setItem('mapLat', c.lat);
+                        localStorage.setItem('mapLng', c.lng);
+                    });
+                }
+            }
+            if (window.hookMapPolygons) window.hookMapPolygons();
+        }, 200);
+    } else {
+        mapContainer.classList.add('hidden');
+        siteListContainer.classList.remove('hidden');
+        searchContainer.classList.remove('hidden');
+        viewToggleIcon.innerText = '🗺️';
+        viewToggleText.innerText = 'Map';
+    }
 });
 
 // Prevent the browser back button from navigating away from the app.
 // If a modal is open, back closes it. Otherwise, stay on the app.
 history.pushState({ page: 'app' }, '', window.location.href);
 window.addEventListener('popstate', () => {
-    const modals = [qrModal, tallyModal, mapModal, helpModal];
+    const modals = [qrModal, tallyModal, helpModal];
     const openModal = modals.find(m => !m.classList.contains('hidden'));
     if (openModal) {
         openModal.classList.add('hidden');
@@ -609,5 +719,241 @@ window.addEventListener('popstate', () => {
     // Always push back so the browser never actually goes back
     history.pushState({ page: 'app' }, '', window.location.href);
 });
+
+// ─── MAP INTEGRATION ──────────────────────────────────────────────────────────
+
+const siteActionModal = document.getElementById('siteActionModal');
+const siteActionSheet = document.getElementById('siteActionSheet');
+const saTitle = document.getElementById('sa-title');
+const saContent = document.getElementById('sa-content');
+let currentMapSiteId = null;
+
+function closeMapSheet() {
+    siteActionSheet.classList.add('translate-y-full');
+    setTimeout(() => {
+        siteActionModal.classList.add('hidden');
+        siteActionModal.classList.remove('flex');
+        currentMapSiteId = null;
+    }, 300);
+}
+
+siteActionModal.addEventListener('click', (e) => {
+    if (e.target === siteActionModal) closeMapSheet();
+});
+
+window.openSiteModal = function(siteId) {
+    const site = campgroundData.find(s => s.id === siteId);
+    if (!site) return;
+    currentMapSiteId = siteId;
+
+    saTitle.textContent = site.id + (site.name ? ' \u2014 ' + site.name : '');
+
+    let bodyHTML = '';
+    if (site.doNotBother) {
+        bodyHTML = '<div class="text-sm font-bold text-red-600 mb-3">\uD83D\uDEAB Do Not Bother</div>';
+    } else if (site.visited && site.purchaseType) {
+        const siteExtras = campgroundData.filter(s => s.isExtra && s.parentId === siteId);
+        let extrasHTML = '';
+        siteExtras.forEach(extra => {
+            if (extra.visited && extra.purchaseType) {
+                extrasHTML += `<div class="mt-2 ml-3 p-2 bg-white rounded-lg border border-orange-200 text-sm flex justify-between items-center">
+                    <div>&#8627; <span class="font-semibold">${extra.purchaseType}${extra.amount ? ' &mdash; $' + extra.amount : ''}</span></div>
+                    <button onclick="window.confirmReset('${extra.id}')" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Undo</button>
+                </div>`;
+            } else {
+                extrasHTML += `<div class="mt-2 ml-3 border-l-4 border-orange-200 pl-3">
+                    <div class="text-xs text-orange-600 font-semibold mb-1">&#8627; Extra ticket:</div>
+                    ${buildModalExtraActionHTML(extra.id)}
+                </div>`;
+            }
+        });
+        bodyHTML = `
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 mb-2">
+                <div class="font-bold text-lg">${site.purchaseType}${site.amount ? ' &mdash; $' + site.amount : ''}</div>
+            </div>
+            ${extrasHTML}
+            ${site.purchaseType !== 'None' ? `<button onclick="window.modalAddExtra('${site.id}')" class="w-full mt-2 py-3 bg-orange-100 text-orange-700 rounded-xl font-bold border border-orange-200 active:bg-orange-200">&#x2795; Add Extra</button>` : ''}
+            <button onclick="window.confirmReset('${site.id}')" class="w-full mt-2 py-3 bg-red-100 text-red-700 rounded-xl font-bold border border-red-200 active:bg-red-200">&#8617;&#65039; Undo</button>`;
+    } else {
+        bodyHTML = buildModalActionHTML(site.id);
+    }
+
+    saContent.innerHTML = bodyHTML;
+    siteActionModal.classList.remove('hidden');
+    siteActionModal.classList.add('flex');
+    setTimeout(() => siteActionSheet.classList.remove('translate-y-full'), 10);
+};
+
+// Modal-specific action HTML — uses "modal-" ID prefix to avoid clashing with list DOM
+function buildModalActionHTML(id) {
+    return `
+        <div class="grid grid-cols-2 gap-3 mt-3" id="modal-actions-${id}">
+            <button onclick="window.modalShowAmount('${id}', 'Cash')" class="py-4 bg-green-200 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-300 active:bg-green-300">
+                <span class="text-2xl mb-1">&#x1F4B5;</span>
+                <span class="text-sm">Cash</span>
+            </button>
+            <button onclick="window.modalShowAmount('${id}', 'eTransfer')" class="py-4 bg-blue-200 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-300 active:bg-blue-300">
+                <span class="text-2xl mb-1">&#x1F4F1;</span>
+                <span class="text-sm">eTransfer</span>
+            </button>
+            <button onclick="window.setVisited('${id}', 'None')" class="col-span-2 py-4 bg-rose-100 text-rose-700 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-rose-200 active:bg-rose-200">
+                <span class="text-2xl mb-1">&#x1F6AB;</span>
+                <span class="text-sm">No</span>
+            </button>
+        </div>
+        <div class="hidden gap-2 mt-2 flex-col" id="modal-payment-${id}">
+            <div class="text-center font-bold text-gray-600 mb-1">Select <span id="modal-payTypeLab-${id}"></span> Amount:</div>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="window.modalComplete('${id}', 5)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg">$5</button>
+                <button onclick="window.modalComplete('${id}', 10)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg">$10</button>
+                <button onclick="window.modalComplete('${id}', 20)" class="py-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold text-lg">$20</button>
+            </div>
+            <button id="modal-qrBtn-${id}" onclick="window.showQR()" class="hidden mt-2 py-3 w-full bg-gray-800 text-white rounded-lg font-bold">
+                Show QR Code / Email
+            </button>
+            <button onclick="window.modalCancel('${id}')" class="mt-2 py-2 w-full bg-red-100 text-red-700 border border-red-200 rounded-lg font-bold shadow-sm text-sm">Back</button>
+        </div>
+    `;
+}
+
+window.modalShowAmount = function(id, type) {
+    tempPaymentType[id] = type;
+    document.getElementById('modal-actions-' + id).classList.add('hidden');
+    const payDiv = document.getElementById('modal-payment-' + id);
+    payDiv.classList.remove('hidden');
+    payDiv.classList.add('flex');
+    document.getElementById('modal-payTypeLab-' + id).innerText = type;
+    const qrBtn = document.getElementById('modal-qrBtn-' + id);
+    if (type === 'eTransfer') qrBtn.classList.remove('hidden');
+    else qrBtn.classList.add('hidden');
+};
+
+window.modalComplete = function(id, amount) {
+    const type = tempPaymentType[id] || 'Cash';
+    window.setVisited(id, type, amount);
+};
+
+window.modalCancel = function(id) {
+    document.getElementById('modal-actions-' + id).classList.remove('hidden');
+    const payDiv = document.getElementById('modal-payment-' + id);
+    payDiv.classList.add('hidden');
+    payDiv.classList.remove('flex');
+};
+
+// Undo confirm modal — iOS-safe (no confirm())
+const undoConfirmModal  = document.getElementById('undoConfirmModal');
+const undoConfirmCancel = document.getElementById('undoConfirmCancel');
+const undoConfirmGo     = document.getElementById('undoConfirmGo');
+let _pendingUndoId = null;
+
+undoConfirmCancel.addEventListener('click', () => {
+    undoConfirmModal.classList.add('hidden');
+    undoConfirmModal.classList.remove('flex');
+    _pendingUndoId = null;
+});
+undoConfirmModal.addEventListener('click', (e) => {
+    if (e.target === undoConfirmModal) undoConfirmCancel.click();
+});
+undoConfirmGo.addEventListener('click', () => {
+    undoConfirmModal.classList.add('hidden');
+    undoConfirmModal.classList.remove('flex');
+    if (_pendingUndoId) window.resetSite(_pendingUndoId);
+    _pendingUndoId = null;
+});
+
+window.confirmReset = function(id) {
+    _pendingUndoId = id;
+    const site = campgroundData.find(s => s.id === id);
+    const extraCount = site && !site.isExtra
+        ? campgroundData.filter(s => s.isExtra && s.parentId === id).length
+        : 0;
+    const extraWarning = document.getElementById('undoConfirmExtrasWarning');
+    if (extraWarning) {
+        if (extraCount > 0) {
+            extraWarning.textContent = `⚠️ This will also remove ${extraCount} extra entr${extraCount === 1 ? 'y' : 'ies'} at this site.`;
+            extraWarning.classList.remove('hidden');
+        } else {
+            extraWarning.classList.add('hidden');
+        }
+    }
+    undoConfirmModal.classList.remove('hidden');
+    undoConfirmModal.classList.add('flex');
+};
+
+window.modalAddExtra = function(parentId) {
+    window.addExtra(parentId);
+    window.openSiteModal(parentId);
+};
+
+function buildModalExtraActionHTML(id) {
+    return `
+        <div class="grid grid-cols-2 gap-2 mt-1" id="modal-actions-${id}">
+            <button onclick="window.modalShowAmount('${id}', 'Cash')" class="py-3 bg-green-200 text-green-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-green-300 active:bg-green-300">
+                <span class="text-xl mb-1">&#x1F4B5;</span>
+                <span class="text-xs">Cash</span>
+            </button>
+            <button onclick="window.modalShowAmount('${id}', 'eTransfer')" class="py-3 bg-blue-200 text-blue-800 rounded-xl font-bold shadow-sm flex flex-col items-center justify-center border border-blue-300 active:bg-blue-300">
+                <span class="text-xl mb-1">&#x1F4F1;</span>
+                <span class="text-xs">eTransfer</span>
+            </button>
+        </div>
+        <div class="hidden gap-2 mt-1 flex-col" id="modal-payment-${id}">
+            <div class="text-center font-bold text-gray-600 text-sm mb-1">Select <span id="modal-payTypeLab-${id}"></span> Amount:</div>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="window.modalComplete('${id}', 5)" class="py-2 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold">$5</button>
+                <button onclick="window.modalComplete('${id}', 10)" class="py-2 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold">$10</button>
+                <button onclick="window.modalComplete('${id}', 20)" class="py-2 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-lg font-bold">$20</button>
+            </div>
+            <button id="modal-qrBtn-${id}" onclick="window.showQR()" class="hidden mt-1 py-2 w-full bg-gray-800 text-white rounded-lg font-bold text-sm">Show QR Code / Email</button>
+        </div>
+    `;
+}
+
+window.updateMapColors = function() {
+    if (!window.sitePolygons) return;
+    campgroundData.forEach(site => {
+        const layer = window.sitePolygons[site.id];
+        if (!layer) return;
+        if (site.doNotBother) {
+            layer.setStyle({ fillColor: '#4B5563', fillOpacity: 0.85 });
+        } else if (!site.visited) {
+            layer.setStyle({ fillColor: '#D1D5DB', fillOpacity: 0.9 });
+        } else if (site.purchaseType === 'Cash') {
+            layer.setStyle({ fillColor: '#bbf7d0', fillOpacity: 1 });
+        } else if (site.purchaseType === 'eTransfer') {
+            layer.setStyle({ fillColor: '#bfdbfe', fillOpacity: 1 });
+        } else if (site.purchaseType === 'None') {
+            layer.setStyle({ fillColor: '#fecdd3', fillOpacity: 1 });
+        }
+    });
+    // T4 and T5 are the same household — T5 mirrors T4/T5's color
+    if (window.sitePolygons['T4'] && window.sitePolygons['T5']) {
+        const t45 = campgroundData.find(s => s.id === 'T4/T5');
+        if (t45) {
+            let col = '#D1D5DB', op = 0.9;
+            if (t45.doNotBother)            { col = '#4B5563'; op = 0.85; }
+            else if (t45.visited && t45.purchaseType === 'Cash')      { col = '#bbf7d0'; op = 1; }
+            else if (t45.visited && t45.purchaseType === 'eTransfer') { col = '#bfdbfe'; op = 1; }
+            else if (t45.visited && t45.purchaseType === 'None')      { col = '#fecdd3'; op = 1; }
+            window.sitePolygons['T4'].setStyle({ fillColor: col, fillOpacity: op });
+            window.sitePolygons['T5'].setStyle({ fillColor: col, fillOpacity: op });
+        }
+    }
+};
+
+window.hookMapPolygons = function() {
+    if (!window.sitePolygons) return;
+    Object.entries(window.sitePolygons).forEach(([siteId, layer]) => {
+        layer.off('click');
+        layer.unbindPopup();
+        // T4 and T5 are the same household — both open T4/T5's modal
+        const targetId = (siteId === 'T5' || siteId === 'T4') ? 'T4/T5' : siteId;
+        layer.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            window.openSiteModal(targetId);
+        });
+    });
+    window.updateMapColors();
+};
 
 // Initial render is triggered by the Firebase onValue listener above

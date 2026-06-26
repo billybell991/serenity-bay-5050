@@ -111,7 +111,28 @@
             <div id="tallyContent" class="space-y-4 mb-6 text-gray-700">
                 <!-- Tally content injected here -->
             </div>
+
+            <!-- Admin Section -->
+            <div class="border-t pt-4 mb-3">
+                <p class="text-xs text-gray-400 text-center mb-2">&#8212; Admin only &#8212;</p>
+                <button id="exportFromHelpBtn" class="w-full py-3 bg-blue-50 text-blue-700 rounded-lg font-bold border border-blue-200 text-sm mb-2">&#128229; Export Full Report to Excel</button>
+                <button id="resetHistoryBtn" class="w-full py-2 bg-amber-50 text-amber-700 rounded-lg font-semibold text-sm border border-amber-200 mb-2">&#128220; Reset History</button>
+                <button id="resetAllBtnHelp" class="w-full py-2 bg-red-50 text-red-600 rounded-lg font-semibold text-sm border border-red-200">&#9888;&#65039; Reset All Data</button>
+            </div>
+
             <button id="closeTally" class="w-full py-3 bg-gray-200 text-gray-800 rounded-lg font-bold">Close</button>
+        </div>
+    </div>
+
+    <!-- Reset History Modal -->
+    <div id="resetHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-[55] justify-center items-start p-4 overflow-y-auto">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full my-4">
+            <h2 class="text-xl font-bold mb-3 text-center border-b pb-2">&#128220; Reset History</h2>
+            <p class="text-xs text-gray-500 text-center mb-3">Each entry is a snapshot of totals at the moment Reset All Data was performed. Full backups are kept in the database for restore.</p>
+            <div id="resetHistoryContent" class="space-y-3 mb-4 max-h-[60vh] overflow-y-auto">
+                <!-- Entries injected here -->
+            </div>
+            <button id="closeResetHistory" class="w-full py-3 bg-gray-200 text-gray-800 rounded-lg font-bold">Close</button>
         </div>
     </div>
 
@@ -160,13 +181,6 @@
                     <p class="text-sm leading-relaxed">1. Tap the <strong>&#8942; menu</strong> (three dots in the top-right corner)<br>2. Tap <strong>"Add to Home Screen"</strong><br>3. Tap <strong>Add</strong> &#8212; you're done!</p>
                 </div>
 
-            </div>
-
-            <!-- Export Section -->
-            <div class="border-t pt-4 mb-3">
-                <p class="text-xs text-gray-400 text-center mb-2">&#8212; Admin only &#8212;</p>
-                <button id="exportFromHelpBtn" class="w-full py-3 bg-blue-50 text-blue-700 rounded-lg font-bold border border-blue-200 text-sm mb-2">&#128229; Export Full Report to Excel</button>
-                <button id="resetAllBtnHelp" class="w-full py-2 bg-red-50 text-red-600 rounded-lg font-semibold text-sm border border-red-200">&#9888;&#65039; Reset All Data</button>
             </div>
 
             <button id="closeHelp" class="w-full py-3 bg-gray-200 text-gray-800 rounded-lg font-bold">Close</button>

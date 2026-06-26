@@ -7045,11 +7045,17 @@ const p41AreaCoords = [[898.5, 2262], [981, 2337], [949, 2361], [913.5, 2387.5],
 const p41Poly = L.polygon(p41AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>P41 - Pat & Goldie</b>");
 const p41Marker = L.marker(p41Center, { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">P41</div>', iconSize: [60,60], iconAnchor: [30,30] }), interactive: false}).addTo(map);
 
-// --- SITE P42 ---
+// --- P42 (no site — repurposed as parking) ---
 const p42Center = [856.2, 2338.9];
 const p42AreaCoords = [[824.5, 2286.5], [844.6, 2284.3], [864.5, 2279], [913.5, 2387.5], [825, 2388.5]];
-const p42Poly = L.polygon(p42AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>Site P42</b>");
-const p42Marker = L.marker(p42Center, { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">P42</div>', iconSize: [60,60], iconAnchor: [30,30] }), interactive: false}).addTo(map);
+const p42Poly = L.polygon(p42AreaCoords, { className: 'organic-polygon', fillColor: '#4B5563', fillOpacity: 0.85 }).addTo(map).bindPopup("<b>Parking</b>");
+L.marker(p42Center, {
+    icon: L.divIcon({
+        className: 'naked-site-label',
+        html: '<div class="scalable-label" style="font-size: 28px;  filter: drop-shadow(1px 1px 0px rgba(0,0,0,1)) drop-shadow(-1px -1px 0px rgba(0,0,0,1)) drop-shadow(1px -1px 0px rgba(0,0,0,1)) drop-shadow(-1px 1px 0px rgba(0,0,0,1));">🅿️</div>',
+        iconSize: [60,60],
+        iconAnchor: [30,30]
+    })}).addTo(map).bindPopup("<b>Parking</b>");
 
 // --- SITE P44 ---
 const p44Center = [796.7, 2336.6];
@@ -7450,7 +7456,6 @@ window.sitePolygons = {
   'P39': p39Poly,
   'P40': p40Poly,
   'P41': p41Poly,
-  'P42': p42Poly,
   'P44': p44Poly,
   'P45': p45Poly,
   'P46': p46Poly,

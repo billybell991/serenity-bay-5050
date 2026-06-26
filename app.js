@@ -1,4 +1,6 @@
 const dataRef = firebase.database().ref('campgroundData');
+const resetLogRef = firebase.database().ref('resetLog');
+const resetBackupsRef = firebase.database().ref('resetBackups');
 
 let campgroundData = [];
 
@@ -33,6 +35,10 @@ const closeTallyBtn = document.getElementById('closeTally');
 const tallyBtn = document.getElementById('tallyBtn');
 const tallyContent = document.getElementById('tallyContent');
 const resetAllBtnHelp = document.getElementById('resetAllBtnHelp');
+const resetHistoryBtn = document.getElementById('resetHistoryBtn');
+const resetHistoryModal = document.getElementById('resetHistoryModal');
+const resetHistoryContent = document.getElementById('resetHistoryContent');
+const closeResetHistoryBtn = document.getElementById('closeResetHistory');
 const mapContainer = document.getElementById('mapContainer');
 const siteListContainer = document.getElementById('sitesList');
 const searchContainer = document.getElementById('searchContainer');
@@ -574,6 +580,13 @@ closeTallyBtn.addEventListener('click', () => {
     tallyModal.classList.remove('flex');
 });
 
+tallyModal.addEventListener('click', (e) => {
+    if (e.target === tallyModal) {
+        tallyModal.classList.add('hidden');
+        tallyModal.classList.remove('flex');
+    }
+});
+
 // ── Reset All Data — modal-driven (iOS-safe, no prompt/confirm) ──────────────
 const resetPasswordModal  = document.getElementById('resetPasswordModal');
 const resetPasswordInput  = document.getElementById('resetPasswordInput');
@@ -611,6 +624,37 @@ function hideResetConfirmModal() {
 }
 
 function executeReset() {
+    // ── Snapshot totals + full data BEFORE wiping ───────────────────────────
+    let totalCash = 0, totalEtransfer = 0, ticketsEstimated = 0, sitesVisited = 0;
+    campgroundData.forEach(site => {
+        if (site.visited && site.amount) {
+            sitesVisited++;
+            if (site.purchaseType === 'Cash') totalCash += site.amount;
+            if (site.purchaseType === 'eTransfer') totalEtransfer += site.amount;
+            if (site.amount === 5) ticketsEstimated += 1;
+            else if (site.amount === 10) ticketsEstimated += 3;
+            else if (site.amount === 20) ticketsEstimated += 7;
+            else ticketsEstimated += Math.floor(site.amount / 5);
+        }
+    });
+    const grossTotal = totalCash + totalEtransfer;
+    const prizeAmount = grossTotal / 2;
+    const timestamp = Date.now();
+    const summary = {
+        timestamp,
+        date: new Date(timestamp).toISOString(),
+        sitesVisited,
+        cashTotal: totalCash,
+        eTransferTotal: totalEtransfer,
+        grossTotal,
+        prizeAmount,
+        ticketsEstimated
+    };
+    // Full restorable snapshot — keyed by timestamp so it's easy to find
+    resetBackupsRef.child(String(timestamp)).set({ ...summary, data: campgroundData });
+    // Lightweight log entry for the Reset History viewer
+    resetLogRef.push(summary);
+
     campgroundData = campgroundData.filter(s => !s.isExtra);
     campgroundData.forEach(site => {
         site.visited = false;
@@ -619,13 +663,56 @@ function executeReset() {
     });
     saveData();
     renderList();
-    tallyModal.classList.add('hidden');
-    tallyModal.classList.remove('flex');
     helpModal.classList.add('hidden');
     helpModal.classList.remove('flex');
+    // Stay on the Live Tally screen and refresh its numbers (now all zeros)
+    tallyBtn.click();
 }
 
 resetAllBtnHelp.addEventListener('click', showResetPasswordModal);
+
+// ── Reset History viewer ────────────────────────────────────────────────────
+function showResetHistoryModal() {
+    resetHistoryContent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Loading…</p>';
+    resetHistoryModal.classList.remove('hidden');
+    resetHistoryModal.classList.add('flex');
+    resetLogRef.once('value').then(snap => {
+        const val = snap.val();
+        if (!val) {
+            resetHistoryContent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No resets recorded yet.</p>';
+            return;
+        }
+        const entries = Object.values(val).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        resetHistoryContent.innerHTML = entries.map(e => {
+            const when = e.timestamp ? new Date(e.timestamp).toLocaleString() : (e.date || 'Unknown');
+            return `
+            <div class="border rounded-lg p-3 bg-gray-50">
+                <div class="font-semibold text-gray-700 text-sm mb-1">${when}</div>
+                <div class="text-xs text-gray-600 grid grid-cols-2 gap-x-2 gap-y-0.5">
+                    <span>💵 Cash:</span><span class="text-right">$${(e.cashTotal||0).toFixed(2)}</span>
+                    <span>📱 eTransfer:</span><span class="text-right">$${(e.eTransferTotal||0).toFixed(2)}</span>
+                    <span>💰 Gross:</span><span class="text-right font-semibold">$${(e.grossTotal||0).toFixed(2)}</span>
+                    <span>🏆 Prize:</span><span class="text-right font-semibold text-green-700">$${(e.prizeAmount||0).toFixed(2)}</span>
+                    <span>🏕️ Sites:</span><span class="text-right">${e.sitesVisited||0}</span>
+                    <span>🎟️ Tickets:</span><span class="text-right">${e.ticketsEstimated||0}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }).catch(err => {
+        resetHistoryContent.innerHTML = `<p class="text-sm text-red-500 text-center py-4">Couldn’t load history: ${err.message}</p>`;
+    });
+}
+
+function hideResetHistoryModal() {
+    resetHistoryModal.classList.add('hidden');
+    resetHistoryModal.classList.remove('flex');
+}
+
+resetHistoryBtn.addEventListener('click', showResetHistoryModal);
+closeResetHistoryBtn.addEventListener('click', hideResetHistoryModal);
+resetHistoryModal.addEventListener('click', (e) => {
+    if (e.target === resetHistoryModal) hideResetHistoryModal();
+});
 
 resetPasswordCancel.addEventListener('click', hideResetPasswordModal);
 resetPasswordModal.addEventListener('click', (e) => {

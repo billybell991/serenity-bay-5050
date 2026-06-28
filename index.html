@@ -74,5 +74,60 @@
         Serenity Bay Social Committee
     </footer>
 
+    <!-- Floating How To button -->
+    <button id="helpFab" aria-label="How To" title="How To"
+            class="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-red-600 text-white text-2xl shadow-lg active:scale-95 transition flex items-center justify-center">
+        &#10067;
+    </button>
+
+    <!-- Help / How To Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 justify-center items-start p-4 overflow-y-auto">
+        <div class="bg-white text-gray-900 rounded-xl p-6 max-w-sm w-full my-4">
+            <h2 class="text-2xl font-bold mb-4 text-center border-b pb-2">&#10067; How To Use This App</h2>
+
+            <div class="space-y-5 text-gray-700 mb-6">
+
+                <div>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#127919; Pick a Draw</h3>
+                    <p class="text-sm leading-relaxed">Tap a card to open it. <strong>50/50 Draw</strong> is our weekly campground 50/50. <strong>Booze Basket</strong> is the season-long basket draw. Each one keeps its own tickets and totals.</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#128179; Selling Tickets</h3>
+                    <p class="text-sm leading-relaxed">Inside a draw, find the camper's site in the list &#8212; or type their site number (like <strong>B4</strong>) in the search box. Tap their card, then tap <strong>Cash</strong> or <strong>eTransfer</strong>, then choose the dollar amount. The site is marked &#9989; Visited!</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-blue-700 text-lg mb-1">&#128202; Tally &amp; &#128506;&#65039; Map</h3>
+                    <p class="text-sm leading-relaxed">Tap <strong>Tally</strong> anytime to see running totals, and <strong>Map</strong> to view the full campground map &#8212; pinch to zoom in on any area.</p>
+                </div>
+
+                <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                    <h3 class="font-bold text-amber-700 text-lg mb-2">&#128241; Add This App to Your Home Screen</h3>
+                    <p class="text-sm font-bold text-gray-700 mb-1">On iPhone (use Safari):</p>
+                    <p class="text-sm leading-relaxed mb-3">1. Open this page in <strong>Safari</strong><br>2. Tap the <strong>Share</strong> button at the bottom (the square with an arrow pointing up &#11014;&#65039;)<br>3. Scroll down and tap <strong>"Add to Home Screen"</strong><br>4. Tap <strong>Add</strong> &#8212; it'll appear just like a real app!</p>
+                    <p class="text-sm font-bold text-gray-700 mb-1">On Android (use Chrome):</p>
+                    <p class="text-sm leading-relaxed">1. Tap the <strong>&#8942; menu</strong> (three dots in the top-right corner)<br>2. Tap <strong>"Add to Home Screen"</strong><br>3. Tap <strong>Add</strong> &#8212; you're done!</p>
+                </div>
+
+            </div>
+
+            <button id="closeHelp" class="w-full py-3 bg-gray-200 text-gray-800 rounded-lg font-bold">Close</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const fab = document.getElementById('helpFab');
+            const modal = document.getElementById('helpModal');
+            const closeBtn = document.getElementById('closeHelp');
+            const open = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); };
+            const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+            fab.addEventListener('click', open);
+            closeBtn.addEventListener('click', close);
+            modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+        })();
+    </script>
+
 </body>
 </html>

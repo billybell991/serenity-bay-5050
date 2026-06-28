@@ -52,6 +52,9 @@
         <h1 class="text-2xl font-bold">&#127903;&#65039; Serenity Bay 50/50 &#127903;&#65039;</h1>
     </header>
 
+    <!-- Edit-lock status / toggle bar -->
+    <button id="lockToggleBar" class="block w-full text-center py-3 px-4 font-bold border-b focus:outline-none"></button>
+
     <!-- Search/Filter -->
     <div id="searchContainer" class="p-4 sticky top-[60px] bg-gray-100 z-10 border-b border-gray-200">
         <input 
@@ -68,7 +71,7 @@
     </div>
 
     <!-- Map Container -->
-    <div id="mapContainer" class="hidden fixed inset-0 top-[60px] bottom-[86px] bg-black z-30">
+    <div id="mapContainer" class="hidden fixed inset-0 top-[112px] bottom-[86px] bg-black z-30">
         <div class="w-full h-full relative" id="map">
             <!-- Leaflet map goes here -->
         </div>
@@ -113,9 +116,10 @@
             </div>
 
             <!-- Admin Section -->
-            <div class="border-t pt-4 mb-3">
+            <div id="tallyAdminSection" class="border-t pt-4 mb-3">
                 <p class="text-xs text-gray-400 text-center mb-2">&#8212; Admin only &#8212;</p>
                 <button id="exportFromHelpBtn" class="w-full py-3 bg-blue-50 text-blue-700 rounded-lg font-bold border border-blue-200 text-sm mb-2">&#128229; Export Full Report to Excel</button>
+                <button id="changeEditCodeBtn" class="w-full py-2 bg-indigo-50 text-indigo-700 rounded-lg font-semibold text-sm border border-indigo-200 mb-2">&#128273; Set Weekly Editing Code</button>
                 <button id="resetHistoryBtn" class="w-full py-2 bg-amber-50 text-amber-700 rounded-lg font-semibold text-sm border border-amber-200 mb-2">&#128220; Reset History</button>
                 <button id="resetAllBtnHelp" class="w-full py-2 bg-red-50 text-red-600 rounded-lg font-semibold text-sm border border-red-200">&#9888;&#65039; Reset All Data</button>
             </div>
@@ -225,6 +229,42 @@
             <div class="flex gap-2">
                 <button id="resetConfirmCancel" class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm">Cancel</button>
                 <button id="resetConfirmGo" class="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold text-sm">Yes, Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unlock Editing — Weekly Code Modal -->
+    <div id="unlockModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-[60] flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-2xl">
+            <h2 class="text-lg font-bold text-blue-700 mb-1">&#128273; Unlock Editing</h2>
+            <p class="text-sm text-gray-500 mb-4">Enter this week&#39;s selling code to record ticket sales.</p>
+            <input id="unlockCodeInput" type="text" inputmode="text" placeholder="Weekly code"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-base mb-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                autocomplete="off" autocorrect="off" autocapitalize="off" />
+            <p id="unlockError" class="text-red-500 text-xs mb-3 hidden">Incorrect code. Try again.</p>
+            <div class="flex gap-2">
+                <button id="unlockCancel" class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm">Cancel</button>
+                <button id="unlockSubmit" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm">Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Weekly Editing Code — Admin Modal -->
+    <div id="editCodeModal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-[60] flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-2xl">
+            <h2 class="text-lg font-bold text-amber-700 mb-1">&#128273; Set Weekly Editing Code</h2>
+            <p class="text-sm text-gray-500 mb-4">Enter the admin password and the new code sellers will use this week.</p>
+            <input id="editCodeAdminPw" type="password" placeholder="Admin password"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-base mb-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                autocomplete="off" autocorrect="off" autocapitalize="off" />
+            <input id="editCodeNew" type="text" placeholder="New weekly code"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-base mb-1 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                autocomplete="off" autocorrect="off" autocapitalize="off" />
+            <p id="editCodeError" class="text-red-500 text-xs mb-3 hidden">Wrong admin password.</p>
+            <p id="editCodeSuccess" class="text-green-600 text-xs mb-3 hidden">Weekly code updated!</p>
+            <div class="flex gap-2">
+                <button id="editCodeCancel" class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm">Cancel</button>
+                <button id="editCodeSave" class="flex-1 py-2 bg-amber-500 text-white rounded-lg font-semibold text-sm">Save</button>
             </div>
         </div>
     </div>

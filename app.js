@@ -1,8 +1,23 @@
 const dataRef = firebase.database().ref('campgroundData');
 const resetLogRef = firebase.database().ref('resetLog');
 const resetBackupsRef = firebase.database().ref('resetBackups');
+const configRef = firebase.database().ref('config');
 
 let campgroundData = [];
+
+// ── Edit access control: read-only by default, unlock with a weekly code ──────
+let editingUnlocked = sessionStorage.getItem('editUnlocked') === 'true';
+let currentEditCode = null;
+configRef.child('editCode').on('value', (snapshot) => {
+    const code = snapshot.val();
+    if (code === null || code === undefined) {
+        // Seed a default weekly code the first time; admins can change it in-app
+        currentEditCode = '5050';
+        configRef.child('editCode').set(currentEditCode);
+    } else {
+        currentEditCode = String(code);
+    }
+});
 
 // Listen for real-time updates — fires on load and whenever any device makes a change
 dataRef.on('value', (snapshot) => {
@@ -149,12 +164,13 @@ function renderList() {
                 <div class="mt-1 p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                     <div class="flex justify-between items-center">
                         <div><span class="font-bold">Status:</span> ${site.purchaseType}${site.amount ? ` - $${site.amount}` : ''}</div>
-                        <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="confirmReset('${site.id}')">Undo</button>
+                        ${editingUnlocked ? `<button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="confirmReset('${site.id}')">Undo</button>` : ''}
                     </div>
-                    ${site.purchaseType !== 'None' ? `<button onclick="addExtra('${site.id}')" class="undo-btn mt-2 w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm border border-orange-200 active:bg-orange-200">&#x2795; Add Extra</button>` : ''}
+                    ${editingUnlocked && site.purchaseType !== 'None' ? `<button onclick="addExtra('${site.id}')" class="undo-btn mt-2 w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm border border-orange-200 active:bg-orange-200">&#x2795; Add Extra</button>` : ''}
                 </div>
             ` : '';
-            bodyHTML = purchaseInfo + (!site.visited ? buildActionHTML(site.id, true, site.id) : '');
+            const lockedHint = `<div class="mt-1 p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm text-amber-700 text-center font-semibold">\uD83D\uDD12 View-only — tap the amber bar at the top to unlock editing</div>`;
+            bodyHTML = purchaseInfo + (!site.visited ? (editingUnlocked ? buildActionHTML(site.id, true, site.id) : lockedHint) : '');
         }
 
         const innerHTML = `
@@ -185,17 +201,17 @@ function renderList() {
                         <span class="font-bold">Status:</span> ${extra.purchaseType}
                         ${extra.amount ? ` - $${extra.amount}` : ''}
                     </div>
-                    <button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="confirmReset('${extra.id}')">Undo</button>
+                    ${editingUnlocked ? `<button class="undo-btn px-3 py-1 bg-red-100 text-red-700 rounded text-sm" onclick="confirmReset('${extra.id}')">Undo</button>` : ''}
                 </div>
             ` : '';
-            const extraBodyHTML = extraPurchaseInfo + (!extra.visited ? buildActionHTML(extra.id, false) : '');
+            const extraBodyHTML = extraPurchaseInfo + (!extra.visited ? (editingUnlocked ? buildActionHTML(extra.id, false) : '') : '');
 
             const extraHTML = `
                 <div class="flex justify-between items-center mb-1 cursor-pointer" onclick="toggleCard('${extra.id}')">
                     <div class="text-base font-bold text-orange-800">📎 Extra @ ${extra.parentId}</div>
                     <div class="flex items-center gap-2">
                         ${extraStatusBadge}
-                        <button onclick="event.stopPropagation(); removeExtra('${extra.id}')" class="text-xs text-red-500 font-bold px-2 py-1 bg-red-50 border border-red-200 rounded">✕</button>
+                        ${editingUnlocked ? `<button onclick="event.stopPropagation(); removeExtra('${extra.id}')" class="text-xs text-red-500 font-bold px-2 py-1 bg-red-50 border border-red-200 rounded">✕</button>` : ''}
                     </div>
                 </div>
                 <div id="body-${extra.id}" class="hidden">${extraBodyHTML}</div>
@@ -211,6 +227,7 @@ function renderList() {
 let tempPaymentType = {};
 
 window.setVisited = function(id, type, amount = 0) {
+    if (!window.requireEdit()) return;
     const site = campgroundData.find(s => s.id === id);
     if(site) {
         site.visited = true;
@@ -227,6 +244,7 @@ window.setVisited = function(id, type, amount = 0) {
 }
 
 window.resetSite = function(id) {
+    if (!window.requireEdit()) return;
     const site = campgroundData.find(s => s.id === id);
     if (site) {
         site.visited = false;
@@ -297,6 +315,7 @@ window.toggleCard = function(id) {
 }
 
 window.addExtra = function(parentId) {
+    if (!window.requireEdit()) return;
     const existingExtras = campgroundData.filter(s => s.isExtra && s.parentId === parentId);
     const nextNum = existingExtras.length + 1;
     const newId = `${parentId}-E${nextNum}`;
@@ -319,6 +338,7 @@ window.addExtra = function(parentId) {
 }
 
 window.removeExtra = function(id) {
+    if (!window.requireEdit()) return;
     campgroundData = campgroundData.filter(s => s.id !== id);
     saveData();
     renderList();
@@ -573,6 +593,7 @@ tallyBtn.addEventListener('click', () => {
     
     tallyModal.classList.remove('hidden');
     tallyModal.classList.add('flex');
+    updateTallyAdminVisibility();
 });
 
 closeTallyBtn.addEventListener('click', () => {
@@ -745,6 +766,147 @@ resetConfirmGo.addEventListener('click', () => {
     executeReset();
 });
 
+// ── Edit access control UI ──────────────────────────────────────────────────
+const lockToggleBar   = document.getElementById('lockToggleBar');
+const unlockModal     = document.getElementById('unlockModal');
+const unlockCodeInput = document.getElementById('unlockCodeInput');
+const unlockError     = document.getElementById('unlockError');
+const unlockCancel    = document.getElementById('unlockCancel');
+const unlockSubmit    = document.getElementById('unlockSubmit');
+const changeEditCodeBtn = document.getElementById('changeEditCodeBtn');
+const editCodeModal   = document.getElementById('editCodeModal');
+const editCodeAdminPw = document.getElementById('editCodeAdminPw');
+const editCodeNew     = document.getElementById('editCodeNew');
+const editCodeError   = document.getElementById('editCodeError');
+const editCodeSuccess = document.getElementById('editCodeSuccess');
+const editCodeCancel  = document.getElementById('editCodeCancel');
+const editCodeSave    = document.getElementById('editCodeSave');
+
+function updateLockUI() {
+    if (!lockToggleBar) return;
+    if (editingUnlocked) {
+        lockToggleBar.innerHTML = '\uD83D\uDD13 Editing unlocked \u2014 tap to lock';
+        lockToggleBar.className = 'block w-full text-center py-3 px-4 font-bold border-b focus:outline-none bg-green-100 text-green-800 border-green-200 active:bg-green-200';
+    } else {
+        lockToggleBar.innerHTML = '\uD83D\uDD12 View-only \u2014 tap to unlock editing';
+        lockToggleBar.className = 'block w-full text-center py-3 px-4 font-bold border-b focus:outline-none bg-amber-100 text-amber-800 border-amber-200 active:bg-amber-200';
+    }
+}
+
+// Show the Tally admin tools only when editing is unlocked — locked users see tally only
+function updateTallyAdminVisibility() {
+    const adminSection = document.getElementById('tallyAdminSection');
+    if (adminSection) adminSection.style.display = editingUnlocked ? '' : 'none';
+}
+
+function setEditingUnlocked(val) {
+    editingUnlocked = val;
+    sessionStorage.setItem('editUnlocked', val ? 'true' : 'false');
+    updateLockUI();
+    updateTallyAdminVisibility();
+    renderList();
+}
+
+function showUnlockModal() {
+    unlockCodeInput.value = '';
+    unlockError.classList.add('hidden');
+    unlockModal.classList.remove('hidden');
+    unlockModal.classList.add('flex');
+    setTimeout(() => unlockCodeInput.focus(), 100);
+}
+
+function hideUnlockModal() {
+    unlockModal.classList.add('hidden');
+    unlockModal.classList.remove('flex');
+    unlockCodeInput.value = '';
+    unlockError.classList.add('hidden');
+}
+
+// Returns true if editing is allowed; otherwise prompts to unlock and returns false
+window.requireEdit = function() {
+    if (editingUnlocked) return true;
+    showUnlockModal();
+    return false;
+};
+
+lockToggleBar.addEventListener('click', () => {
+    if (editingUnlocked) {
+        setEditingUnlocked(false);
+    } else {
+        showUnlockModal();
+    }
+});
+
+unlockCancel.addEventListener('click', hideUnlockModal);
+unlockModal.addEventListener('click', (e) => {
+    if (e.target === unlockModal) hideUnlockModal();
+});
+
+unlockSubmit.addEventListener('click', () => {
+    const entered = (unlockCodeInput.value || '').trim();
+    if (currentEditCode && entered.toLowerCase() === String(currentEditCode).toLowerCase()) {
+        hideUnlockModal();
+        setEditingUnlocked(true);
+    } else {
+        unlockError.classList.remove('hidden');
+        unlockCodeInput.value = '';
+        unlockCodeInput.focus();
+    }
+});
+
+unlockCodeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') unlockSubmit.click();
+});
+
+// ── Admin: set the weekly editing code ──────────────────────────────────────
+function showEditCodeModal() {
+    editCodeAdminPw.value = '';
+    editCodeNew.value = '';
+    editCodeError.classList.add('hidden');
+    editCodeSuccess.classList.add('hidden');
+    editCodeModal.classList.remove('hidden');
+    editCodeModal.classList.add('flex');
+    setTimeout(() => editCodeAdminPw.focus(), 100);
+}
+
+function hideEditCodeModal() {
+    editCodeModal.classList.add('hidden');
+    editCodeModal.classList.remove('flex');
+}
+
+changeEditCodeBtn.addEventListener('click', showEditCodeModal);
+editCodeCancel.addEventListener('click', hideEditCodeModal);
+editCodeModal.addEventListener('click', (e) => {
+    if (e.target === editCodeModal) hideEditCodeModal();
+});
+
+editCodeSave.addEventListener('click', () => {
+    editCodeError.classList.add('hidden');
+    editCodeSuccess.classList.add('hidden');
+    if (editCodeAdminPw.value !== 'serenity2026') {
+        editCodeError.classList.remove('hidden');
+        editCodeAdminPw.value = '';
+        editCodeAdminPw.focus();
+        return;
+    }
+    const newCode = (editCodeNew.value || '').trim();
+    if (!newCode) {
+        editCodeNew.focus();
+        return;
+    }
+    configRef.child('editCode').set(newCode).then(() => {
+        editCodeSuccess.classList.remove('hidden');
+        setTimeout(hideEditCodeModal, 1200);
+    });
+});
+
+editCodeNew.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') editCodeSave.click();
+});
+
+// Reflect the initial lock state on load
+updateLockUI();
+
 viewToggleBtn.addEventListener('click', () => {
     mapVisible = !mapVisible;
     if (mapVisible) {
@@ -845,9 +1007,9 @@ window.openSiteModal = function(siteId) {
             if (extra.visited && extra.purchaseType) {
                 extrasHTML += `<div class="mt-2 ml-3 p-2 bg-white rounded-lg border border-orange-200 text-sm flex justify-between items-center">
                     <div>&#8627; <span class="font-semibold">${extra.purchaseType}${extra.amount ? ' &mdash; $' + extra.amount : ''}</span></div>
-                    <button onclick="window.confirmReset('${extra.id}')" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Undo</button>
+                    ${editingUnlocked ? `<button onclick="window.confirmReset('${extra.id}')" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Undo</button>` : ''}
                 </div>`;
-            } else {
+            } else if (editingUnlocked) {
                 extrasHTML += `<div class="mt-2 ml-3 border-l-4 border-orange-200 pl-3">
                     <div class="text-xs text-orange-600 font-semibold mb-1">&#8627; Extra ticket:</div>
                     ${buildModalExtraActionHTML(extra.id)}
@@ -859,10 +1021,12 @@ window.openSiteModal = function(siteId) {
                 <div class="font-bold text-lg">${site.purchaseType}${site.amount ? ' &mdash; $' + site.amount : ''}</div>
             </div>
             ${extrasHTML}
-            ${site.purchaseType !== 'None' ? `<button onclick="window.modalAddExtra('${site.id}')" class="w-full mt-2 py-3 bg-orange-100 text-orange-700 rounded-xl font-bold border border-orange-200 active:bg-orange-200">&#x2795; Add Extra</button>` : ''}
-            <button onclick="window.confirmReset('${site.id}')" class="w-full mt-2 py-3 bg-red-100 text-red-700 rounded-xl font-bold border border-red-200 active:bg-red-200">&#8617;&#65039; Undo</button>`;
-    } else {
+            ${editingUnlocked && site.purchaseType !== 'None' ? `<button onclick="window.modalAddExtra('${site.id}')" class="w-full mt-2 py-3 bg-orange-100 text-orange-700 rounded-xl font-bold border border-orange-200 active:bg-orange-200">&#x2795; Add Extra</button>` : ''}
+            ${editingUnlocked ? `<button onclick="window.confirmReset('${site.id}')" class="w-full mt-2 py-3 bg-red-100 text-red-700 rounded-xl font-bold border border-red-200 active:bg-red-200">&#8617;&#65039; Undo</button>` : ''}`;
+    } else if (editingUnlocked) {
         bodyHTML = buildModalActionHTML(site.id);
+    } else {
+        bodyHTML = '<div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm text-amber-700 text-center font-semibold">\uD83D\uDD12 View-only \u2014 close this and tap the amber bar at the top to unlock editing</div>';
     }
 
     saContent.innerHTML = bodyHTML;

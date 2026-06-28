@@ -2,3 +2,8 @@
 _keys.local.txt
 _dns_setup.ps1
 
+
+# Large source images (optimized copies live in shared/img/)
+camp.png
+5050.png
+booze.png

@@ -814,9 +814,10 @@ const editCodeSave    = document.getElementById('editCodeSave');
 function updateLockUI() {
     if (!lockToggleBar) return;
     if (editingUnlocked) {
-        lockToggleBar.innerHTML = '\uD83D\uDD13 Editing unlocked \u2014 tap to lock';
-        lockToggleBar.className = 'block w-full text-center py-3 px-4 font-bold border-b focus:outline-none bg-green-100 text-green-800 border-green-200 active:bg-green-200';
+        // Once unlocked, hide the bar entirely so it stays out of the way while working.
+        lockToggleBar.style.display = 'none';
     } else {
+        lockToggleBar.style.display = '';
         lockToggleBar.innerHTML = '\uD83D\uDD12 View-only \u2014 tap to unlock editing';
         lockToggleBar.className = 'block w-full text-center py-3 px-4 font-bold border-b focus:outline-none bg-amber-100 text-amber-800 border-amber-200 active:bg-amber-200';
     }

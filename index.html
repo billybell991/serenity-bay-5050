@@ -2,13 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Serenity Bay Social Committee</title>
-    <meta http-equiv="refresh" content="0; url=./5050/">
-    <link rel="canonical" href="./5050/">
-    <script>window.location.replace('./5050/');</script>
+    <!-- Tailwind CSS for super fast mobile styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .draw-card {
+            border-radius: 18px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        .draw-card:active {
+            transform: scale(0.97);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+        }
+    </style>
 </head>
-<body>
-    <p>Redirecting to the <a href="./5050/">Serenity Bay 50/50</a>&hellip;</p>
+<body class="text-gray-900 min-h-screen flex flex-col">
+
+    <!-- Fixed Header -->
+    <header class="bg-blue-600 text-white p-4 sticky top-0 z-20 text-center shadow-md">
+        <h1 class="text-2xl font-bold">&#9978; Serenity Bay Social Committee &#9978;</h1>
+    </header>
+
+    <!-- Landing content -->
+    <main class="flex-1 flex flex-col items-center justify-center p-6">
+        <div class="w-full max-w-md">
+            <p class="text-center text-gray-500 text-lg mb-8">Tap a draw to get started</p>
+
+            <!-- 50/50 Draw card -->
+            <a href="./5050/"
+               class="draw-card block bg-gradient-to-br from-blue-500 to-blue-700 text-white p-7 mb-6 no-underline">
+                <div class="flex items-center gap-5">
+                    <span class="text-5xl leading-none">&#127903;&#65039;</span>
+                    <div class="flex-1">
+                        <div class="text-2xl font-extrabold leading-tight">50/50 Draw</div>
+                        <div class="text-blue-100 text-sm mt-1">Weekly campground 50/50</div>
+                    </div>
+                    <span class="text-3xl font-bold">&rsaquo;</span>
+                </div>
+            </a>
+
+            <!-- Booze Basket card -->
+            <a href="./booze/"
+               class="draw-card block bg-gradient-to-br from-amber-500 to-orange-700 text-white p-7 no-underline">
+                <div class="flex items-center gap-5">
+                    <span class="text-5xl leading-none">&#129530;</span>
+                    <div class="flex-1">
+                        <div class="text-2xl font-extrabold leading-tight">Booze Basket</div>
+                        <div class="text-amber-100 text-sm mt-1">Season-long basket draw</div>
+                    </div>
+                    <span class="text-3xl font-bold">&rsaquo;</span>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <footer class="text-center text-gray-400 text-xs py-4">
+        Serenity Bay Social Committee
+    </footer>
+
 </body>
 </html>

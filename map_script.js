@@ -6257,16 +6257,16 @@ L.marker(b17Center, { icon: b17Label, interactive: false}).addTo(map);
 
 // --- SITE B14 ---
 const b14AreaCoords = [
-    [412.8, 422.3],
-    [443.6, 466.7],
-    [354.4, 541.1],
-    [322.3, 495.6]
+    [473.3, 510.8],
+    [510.8, 560.0],
+    [429.3, 629.8],
+    [386.4, 580.6]
 ];
 const b14Poly = L.polygon(b14AreaCoords, {
     className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1
 }).addTo(map).bindPopup("<b>B14 - Devin & Blair</b>");
 const b14Label = L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">B14</div>', iconSize: [60,60], iconAnchor: [30,30] });
-L.marker([383, 481], { icon: b14Label, interactive: false}).addTo(map);
+L.marker([449, 570], { icon: b14Label, interactive: false}).addTo(map);
 
 // --- SITE B15 ---
 const b15AreaCoords = [
@@ -6283,16 +6283,16 @@ L.marker([414, 524], { icon: b15Label, interactive: false}).addTo(map);
 
 // --- SITE B16 ---
 const b16AreaCoords = [
-    [473.3, 510.8],
-    [510.8, 560.0],
-    [429.3, 629.8],
-    [386.4, 580.6]
+    [412.8, 422.3],
+    [443.6, 466.7],
+    [354.4, 541.1],
+    [322.3, 495.6]
 ];
 const b16Poly = L.polygon(b16AreaCoords, {
     className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1
 }).addTo(map).bindPopup("<b>B16 - Deanna & Drew</b>");
 const b16Label = L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">B16</div>', iconSize: [60,60], iconAnchor: [30,30] });
-L.marker([449, 570], { icon: b16Label, interactive: false}).addTo(map);
+L.marker([383, 481], { icon: b16Label, interactive: false}).addTo(map);
 
 // --- SITE S24 ---
 const s24AreaCoords = [
@@ -6695,7 +6695,7 @@ const p55Marker = L.marker(p55Center, { icon: L.divIcon({ className: 'naked-site
 // --- SITE P56 ---
 const p56Center = [83.8, 1431.8];
 const p56AreaCoords = [[44.6,1384.8],[110,1378.9],[114.2,1419.9],[118.9,1458],[124.3,1536.5],[53.5,1492.5]];
-const p56Poly = L.polygon(p56AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>P56 - Diane & Al</b>");
+const p56Poly = L.polygon(p56AreaCoords, { className: 'organic-polygon', fillColor: '#b5c898', fillOpacity: 1 }).addTo(map).bindPopup("<b>P56 - Debbie & Al</b>");
 const p56Marker = L.marker(p56Center, { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label">P56</div>', iconSize: [60,60], iconAnchor: [30,30] }), interactive: false}).addTo(map);
 
 // --- SITE P57 ---

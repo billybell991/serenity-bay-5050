@@ -25,7 +25,9 @@ const configRef = firebase.database().ref(DRAW.configNode);
 let campgroundData = [];
 
 // ── Edit access control: read-only by default, unlock with a weekly code ──────
-let editingUnlocked = sessionStorage.getItem('editUnlocked') === 'true';
+// Unlock state is per-draw (and per-tab) so the 50/50 and Booze Basket lock independently.
+const EDIT_UNLOCK_KEY = 'editUnlocked_' + DRAW.id;
+let editingUnlocked = sessionStorage.getItem(EDIT_UNLOCK_KEY) === 'true';
 let currentEditCode = null;
 configRef.child('editCode').on('value', (snapshot) => {
     const code = snapshot.val();
@@ -831,7 +833,7 @@ function updateTallyAdminVisibility() {
 
 function setEditingUnlocked(val) {
     editingUnlocked = val;
-    sessionStorage.setItem('editUnlocked', val ? 'true' : 'false');
+    sessionStorage.setItem(EDIT_UNLOCK_KEY, val ? 'true' : 'false');
     updateLockUI();
     updateTallyAdminVisibility();
     renderList();

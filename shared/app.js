@@ -941,7 +941,20 @@ updateLockUI();
 (function applyDrawConfig() {
     document.title = DRAW.title;
     const titleEl = document.getElementById('appTitle');
-    if (titleEl) titleEl.innerHTML = `${DRAW.emoji} ${DRAW.title} ${DRAW.emoji}`;
+    if (titleEl) {
+        const ORG = 'Serenity Bay';
+        let eyebrow = '';
+        let main = DRAW.title;
+        if (DRAW.title.startsWith(ORG + ' ')) {
+            eyebrow = ORG;
+            main = DRAW.title.slice(ORG.length + 1);
+        }
+        titleEl.className = 'leading-none';
+        titleEl.innerHTML = eyebrow
+            ? `<span class="block text-[11px] sm:text-xs font-semibold tracking-[0.25em] uppercase opacity-75 mb-1">${eyebrow}</span>` +
+              `<span class="block text-2xl font-bold whitespace-nowrap">${DRAW.emoji} ${main} ${DRAW.emoji}</span>`
+            : `<span class="block text-2xl font-bold whitespace-nowrap">${DRAW.emoji} ${main} ${DRAW.emoji}</span>`;
+    }
     // Hide the reset tools entirely when this draw doesn't do a periodic reset
     if (!DRAW.showReset) {
         ['resetAllBtnHelp', 'resetHistoryBtn'].forEach(id => {

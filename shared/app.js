@@ -1,7 +1,26 @@
-const dataRef = firebase.database().ref('campgroundData');
-const resetLogRef = firebase.database().ref('resetLog');
-const resetBackupsRef = firebase.database().ref('resetBackups');
-const configRef = firebase.database().ref('config');
+// ── Per-draw configuration ────────────────────────────────────────────────
+// Each draw page (/5050/, /booze/) sets window.DRAW before this script loads.
+// Anything not provided falls back to the 50/50 defaults below.
+const DRAW = Object.assign({
+    id: '5050',
+    title: 'Serenity Bay 50/50',
+    emoji: '\uD83C\uDF9F\uFE0F',              // 🎟️
+    dbNode: 'campgroundData',
+    configNode: 'config',
+    resetLogNode: 'resetLog',
+    resetBackupsNode: 'resetBackups',
+    defaultCode: '5050',
+    adminPassword: 'serenity2026',
+    codeLabel: 'Weekly',                       // wording for the editing code
+    showReset: true,                           // weekly reset feature
+    showGross: true,                           // "Gross Raised" tally line
+    prizeSplit: 0.5                            // null => no prize line / not a 50/50 split
+}, window.DRAW || {});
+
+const dataRef = firebase.database().ref(DRAW.dbNode);
+const resetLogRef = firebase.database().ref(DRAW.resetLogNode);
+const resetBackupsRef = firebase.database().ref(DRAW.resetBackupsNode);
+const configRef = firebase.database().ref(DRAW.configNode);
 
 let campgroundData = [];
 
@@ -11,8 +30,8 @@ let currentEditCode = null;
 configRef.child('editCode').on('value', (snapshot) => {
     const code = snapshot.val();
     if (code === null || code === undefined) {
-        // Seed a default weekly code the first time; admins can change it in-app
-        currentEditCode = '5050';
+        // Seed a default editing code the first time; admins can change it in-app
+        currentEditCode = DRAW.defaultCode;
         configRef.child('editCode').set(currentEditCode);
     } else {
         currentEditCode = String(code);
@@ -380,7 +399,7 @@ async function exportToExcel() {
     });
     
     const grossTotal = totalCash + totalEtransfer;
-    const finalPrize = grossTotal / 2;
+    const finalPrize = DRAW.prizeSplit ? grossTotal * DRAW.prizeSplit : 0;
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Serenity Bay Tracker';
@@ -469,7 +488,7 @@ async function exportToExcel() {
     // Page Title
     ws2.mergeCells('B2:C2');
     const title = ws2.getCell('B2');
-    title.value = "📊 Serenity Bay 50/50 - Final Tally";
+    title.value = "📊 " + DRAW.title + " - Final Tally";
     title.font = { size: 18, bold: true, color: { argb: 'FF1F2937' } };
     title.alignment = { horizontal: 'center' };
     
@@ -503,11 +522,15 @@ async function exportToExcel() {
     // Populate rows
     addStatRow(6, '💵 Total Cash Collected', totalCash, true, 'FFF0FDF4', 'FF166534', false); // Green tint
     addStatRow(7, '📱 Total eTransfer Collected', totalEtransfer, true, 'FFEFF6FF', 'FF1E40AF', false); // Blue tint
-    addStatRow(8, '💰 Gross Total Raised', grossTotal, true, 'FFFFFBEB', 'FF92400E', true); // Yellow tint
-    addStatRow(10, '🏆 50% Draw Prize Output', finalPrize, true, 'FFDCFCE7', 'FF16A34A', true); // Bright green tint
-    ws2.getRow(10).height = 35; // Make prize bigger
-    ws2.getRow(10).getCell('B').font = { bold: true, color: { argb: 'FF16A34A' }, size: 18 };
-    ws2.getRow(10).getCell('C').font = { bold: true, color: { argb: 'FF16A34A' }, size: 18 };
+    if (DRAW.showGross) {
+        addStatRow(8, '💰 Gross Total Raised', grossTotal, true, 'FFFFFBEB', 'FF92400E', true); // Yellow tint
+    }
+    if (DRAW.prizeSplit) {
+        addStatRow(10, `🏆 ${Math.round(DRAW.prizeSplit * 100)}% Draw Prize Output`, finalPrize, true, 'FFDCFCE7', 'FF16A34A', true); // Bright green tint
+        ws2.getRow(10).height = 35; // Make prize bigger
+        ws2.getRow(10).getCell('B').font = { bold: true, color: { argb: 'FF16A34A' }, size: 18 };
+        ws2.getRow(10).getCell('C').font = { bold: true, color: { argb: 'FF16A34A' }, size: 18 };
+    }
 
     addStatRow(13, '🎟️ Estimated Tickets Sold', estimatedTickets, false, 'FFF3F4F6', 'FF374151', true);
     ws2.getCell('C13').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -519,7 +542,8 @@ async function exportToExcel() {
     
     const link = document.createElement("a");
     link.href = url;
-    link.download = `SerenityBay_50-50_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const safeName = DRAW.title.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+    link.download = `${safeName}_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -578,13 +602,18 @@ tallyBtn.addEventListener('click', () => {
     });
     
     const grossTotal = totalCash + totalEtransfer;
-    const finalPrize = grossTotal / 2;
-    
+    const finalPrize = DRAW.prizeSplit ? grossTotal * DRAW.prizeSplit : 0;
+
+    const grossLine = DRAW.showGross ? `
+        <div class="flex justify-between border-b pb-2 text-blue-700 bg-blue-50 p-2 rounded mt-2"><span class="font-bold">💰 Gross Raised:</span> <span class="font-bold">$${grossTotal.toFixed(2)}</span></div>` : '';
+    const prizeLine = DRAW.prizeSplit ? `
+        <div class="flex justify-between border-b pb-2 text-green-700 bg-green-50 p-2 rounded mt-2 shadow-sm border border-green-200"><span class="font-bold text-xl">🏆 Draw Prize (${Math.round(DRAW.prizeSplit * 100)}%):</span> <span class="font-bold text-xl">$${finalPrize.toFixed(2)}</span></div>` : '';
+
     tallyContent.innerHTML = `
         <div class="flex justify-between border-b pb-2"><span class="font-semibold">💵 Total Cash:</span> <span>$${totalCash.toFixed(2)}</span></div>
         <div class="flex justify-between border-b pb-2"><span class="font-semibold">📱 Total eTransfer:</span> <span>$${totalEtransfer.toFixed(2)}</span></div>
-        <div class="flex justify-between border-b pb-2 text-blue-700 bg-blue-50 p-2 rounded mt-2"><span class="font-bold">💰 Gross Raised:</span> <span class="font-bold">$${grossTotal.toFixed(2)}</span></div>
-        <div class="flex justify-between border-b pb-2 text-green-700 bg-green-50 p-2 rounded mt-2 shadow-sm border border-green-200"><span class="font-bold text-xl">🏆 Draw Prize (50%):</span> <span class="font-bold text-xl">$${finalPrize.toFixed(2)}</span></div>
+        ${grossLine}
+        ${prizeLine}
         <div class="mt-4 text-center text-sm text-gray-500 bg-gray-100 p-3 rounded">
             Estimated Tickets Sold: <span class="font-bold text-gray-800 text-lg">${estimatedTickets}</span>
             <br/><span class="text-xs">(Tickets: $5=1, $10=3, $20=7)</span>
@@ -659,7 +688,7 @@ function executeReset() {
         }
     });
     const grossTotal = totalCash + totalEtransfer;
-    const prizeAmount = grossTotal / 2;
+    const prizeAmount = DRAW.prizeSplit ? grossTotal * DRAW.prizeSplit : 0;
     const timestamp = Date.now();
     const summary = {
         timestamp,
@@ -741,7 +770,7 @@ resetPasswordModal.addEventListener('click', (e) => {
 });
 
 resetPasswordSubmit.addEventListener('click', () => {
-    if (resetPasswordInput.value === 'serenity2026') {
+    if (resetPasswordInput.value === DRAW.adminPassword) {
         hideResetPasswordModal();
         showResetConfirmModal();
     } else {
@@ -883,7 +912,7 @@ editCodeModal.addEventListener('click', (e) => {
 editCodeSave.addEventListener('click', () => {
     editCodeError.classList.add('hidden');
     editCodeSuccess.classList.add('hidden');
-    if (editCodeAdminPw.value !== 'serenity2026') {
+    if (editCodeAdminPw.value !== DRAW.adminPassword) {
         editCodeError.classList.remove('hidden');
         editCodeAdminPw.value = '';
         editCodeAdminPw.focus();
@@ -906,6 +935,20 @@ editCodeNew.addEventListener('keydown', (e) => {
 
 // Reflect the initial lock state on load
 updateLockUI();
+
+// ── Apply per-draw branding & feature flags ────────────────────────────────
+(function applyDrawConfig() {
+    document.title = DRAW.title;
+    const titleEl = document.getElementById('appTitle');
+    if (titleEl) titleEl.innerHTML = `${DRAW.emoji} ${DRAW.title} ${DRAW.emoji}`;
+    // Hide the reset tools entirely when this draw doesn't do a periodic reset
+    if (!DRAW.showReset) {
+        ['resetAllBtnHelp', 'resetHistoryBtn'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    }
+})();
 
 viewToggleBtn.addEventListener('click', () => {
     mapVisible = !mapVisible;

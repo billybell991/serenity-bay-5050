@@ -22,7 +22,9 @@ const imageHeight = 1790;
 const bounds = [[0, 0], [imageHeight, imageWidth]];
 
 // 3. Add the image to the map as an overlay
-const imageOverlay = L.imageOverlay('park_map_naked.png', bounds).addTo(map);
+// Image lives in the shared/ folder; each draw page sits one level under the
+// domain root (/5050/, /booze/), so reference it relative to the page.
+const imageOverlay = L.imageOverlay('../shared/park_map_naked.png', bounds).addTo(map);
 
 
 L.marker([385.6, 1856.3], { icon: L.divIcon({ className: 'naked-site-label', html: '<div class="scalable-label" style="font-size: 28px;  filter: drop-shadow(1px 1px 0px rgba(0,0,0,1)) drop-shadow(-1px -1px 0px rgba(0,0,0,1)) drop-shadow(1px -1px 0px rgba(0,0,0,1)) drop-shadow(-1px 1px 0px rgba(0,0,0,1));">🅿️</div>', iconSize: [60,60], iconAnchor: [30,30] })}).addTo(map).bindPopup("<b>Parking</b>");

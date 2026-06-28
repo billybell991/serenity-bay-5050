@@ -823,7 +823,21 @@ function updateLockUI() {
         lockToggleBar.innerHTML = '\uD83D\uDD12 View-only \u2014 tap to unlock editing';
         lockToggleBar.className = 'block w-full text-center py-3 px-4 font-bold border-b focus:outline-none bg-amber-100 text-amber-800 border-amber-200 active:bg-amber-200';
     }
+    positionMapBelowChrome();
 }
+
+// Keep the fixed map overlay starting right below the header + (visible) lock bar,
+// so the "View-only" bar is never covered by the map.
+function positionMapBelowChrome() {
+    if (!mapContainer) return;
+    const header = document.querySelector('header');
+    let top = header ? header.offsetHeight : 0;
+    if (lockToggleBar && lockToggleBar.style.display !== 'none') {
+        top += lockToggleBar.offsetHeight;
+    }
+    mapContainer.style.top = top + 'px';
+}
+window.addEventListener('resize', positionMapBelowChrome);
 
 // Show the Tally admin tools only when editing is unlocked — locked users see tally only
 function updateTallyAdminVisibility() {
@@ -970,6 +984,7 @@ viewToggleBtn.addEventListener('click', () => {
     mapVisible = !mapVisible;
     if (mapVisible) {
         mapContainer.classList.remove('hidden');
+        positionMapBelowChrome();
         siteListContainer.classList.add('hidden');
         searchContainer.classList.add('hidden');
         viewToggleIcon.innerText = '📋';

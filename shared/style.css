@@ -6,6 +6,9 @@ body, html {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* When a header background photo loads, hide the fallback emojis in the title */
+header.has-media .hdr-emoji { display: none; }
+
 #map {
     height: 100%;
     width: 100%;

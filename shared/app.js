@@ -951,11 +951,11 @@ updateLockUI();
             eyebrow = ORG;
             main = DRAW.title.slice(ORG.length + 1);
         }
-        titleEl.className = 'leading-none';
+        titleEl.className = 'leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.55)]';
+        const mainHtml = `<span class="block text-2xl font-bold whitespace-nowrap"><span class="hdr-emoji">${DRAW.emoji} </span>${main}<span class="hdr-emoji"> ${DRAW.emoji}</span></span>`;
         titleEl.innerHTML = eyebrow
-            ? `<span class="block text-[11px] sm:text-xs font-semibold tracking-[0.25em] uppercase opacity-75 mb-1">${eyebrow}</span>` +
-              `<span class="block text-2xl font-bold whitespace-nowrap">${DRAW.emoji} ${main} ${DRAW.emoji}</span>`
-            : `<span class="block text-2xl font-bold whitespace-nowrap">${DRAW.emoji} ${main} ${DRAW.emoji}</span>`;
+            ? `<span class="block text-[11px] sm:text-xs font-semibold tracking-[0.25em] uppercase opacity-90 mb-1">${eyebrow}</span>` + mainHtml
+            : mainHtml;
     }
     // Hide the reset tools entirely when this draw doesn't do a periodic reset
     if (!DRAW.showReset) {

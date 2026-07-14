@@ -7552,14 +7552,16 @@ L.circle([1379.070121016092, 1727.6216851387567], { radius: 3, stroke: false, we
     const mgStyle = document.createElement('style');
     mgStyle.id = 'mini-golf-2026-css';
     mgStyle.textContent = `
+    .golf-flag-icon{ background:transparent; border:none; pointer-events:none !important; }
     .golf-flag-marker{
         position:relative; width:60px; height:54px;
         transform: scale(var(--map-zoom-scale, 1));
         transform-origin: bottom center;
         will-change: transform;
         filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.35));
-        cursor: move;
+        pointer-events:none;
     }
+    .golf-flag-pennant, .golf-flag-pole, .golf-flag-hole{ pointer-events:auto; cursor:pointer; }
     .golf-flag-pole{
         position:absolute; left:50%; bottom:0;
         width:4px; height:39px; margin-left:-2px;
@@ -7614,7 +7616,7 @@ L.circle([1379.070121016092, 1727.6216851387567], { radius: 3, stroke: false, we
     ];
 
     const makeFlagIcon = (num) => L.divIcon({
-        className: 'naked-site-label',
+        className: 'golf-flag-icon',
         html: `<div class="golf-flag-marker"><div class="golf-flag-pennant">${num}</div><div class="golf-flag-pole"></div><div class="golf-flag-hole"></div></div>`,
         iconSize: [60, 54],
         iconAnchor: [30, 52]

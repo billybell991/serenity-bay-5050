@@ -7604,7 +7604,7 @@ L.circle([1379.070121016092, 1727.6216851387567], { radius: 3, stroke: false, we
     const holes = [
         { h: 1, site: 'S2',  name: "Angie & Pat",     pos: [213.5, 1685.7] },
         { h: 2, site: 'S6',  name: "Paula & Peter",   pos: [255.1, 1320.7] },
-        { h: 3, site: 'B16', name: "Devin & Blair",   pos: [416.2, 450.0] },
+        { h: 3, site: 'B16', name: "Deanna & Drew", pos: [416.2, 450.0] },
         { h: 4, site: 'B15', name: "Andy & Kelly",    pos: [453.0, 509.2] },
         { h: 5, site: 'S24', name: "Sarah & Steve",   pos: [1074.9, 950.3] },
         { h: 6, site: 'P27', name: "Tedra & Clayton", pos: [795.1, 1462.1] },
@@ -7626,7 +7626,7 @@ L.circle([1379.070121016092, 1727.6216851387567], { radius: 3, stroke: false, we
     holes.forEach((hole) => {
         const marker = L.marker(hole.pos, {
             icon: makeFlagIcon(hole.h),
-            draggable: true
+            draggable: false
         }).addTo(map).bindPopup(`<b>&#9971; Hole ${hole.h}</b><br>${hole.site} &mdash; ${hole.name}`);
         marker.miniGolfHole = hole.h;
         window.miniGolf2026.markers.push(marker);

@@ -1,0 +1,215 @@
+/* Make the map take up the full screen */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#map {
+    height: 100vh;
+    width: 100vw;
+    background-color: #f1f2f6; /* Nice neutral background behind the map */
+}
+
+/* Custom interactive legend floating over the map */
+.map-legend {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 1000; /* Keeps it above the map tiles */
+    pointer-events: auto;
+    cursor: grab; /* Shows it can be moved */
+}
+
+.map-legend:active {
+    cursor: grabbing;
+}
+
+.map-legend h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 5px;
+}
+
+.map-legend ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.map-legend li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #34495e;
+}
+
+.legend-color {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.legend-icon {
+    display: inline-block;
+    width: 16px;
+    text-align: center;
+    margin-right: 10px;
+}
+
+/* Custom map markers and labels */
+.site-label {
+    background-color: white;
+    border: 2px solid #333;
+    border-radius: 50%;
+    color: #333;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    line-height: 24px; /* Centers text vertically */
+    box-shadow: 0px 2px 4px rgba(0,0,0,0.3);
+}
+
+.premium-site {
+    background-color: #2ecc71; /* Match legend */
+    color: white;
+    border-color: #27ae60;
+}
+
+/* Invisible label container that just holds raw text for naked map styling */
+.naked-site-label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    border: none;
+}
+
+/* The actual text element that scales with the map zoom */
+.scalable-label {
+    color: #333333;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 24px; /* Base size at 1:1 map resolution */
+    text-align: center;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.7), -1px -1px 1px rgba(255,255,255,0.7);
+    transform: scale(var(--map-zoom-scale, 1));
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* Organic style for drawn sites to match the raster map */
+.organic-polygon {
+    stroke: #4a3b32 !important;
+    stroke-width: calc(3px * var(--map-zoom-scale, 1)) !important;
+    filter: blur(0.6px); /* Very slight blur to soften the harsh digital edges */
+}
+
+/* Invisible patch for blending out old map features */
+.map-patch {
+    filter: blur(3px); /* Heavier blur to blend seamlessly */
+}
+
+/* Embedded In-Map Legend Text */
+.embedded-legend-text {
+    color: #333333;
+    font-family: 'Segoe UI', -apple-system, system-ui, sans-serif;
+    font-size: 28px;
+    text-align: left;
+    box-sizing: border-box;
+    transform: scale(var(--map-zoom-scale, 1));
+    transform-origin: center center;
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
+.embedded-legend-text h2 {
+    margin: 0 0 12px 0;
+    font-size: 42px;
+    font-family: 'Georgia', serif; /* Classic mapping aesthetic */
+    border-bottom: 4px solid #4a3b32;
+    padding-bottom: 8px;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+.embedded-legend-item {
+    margin-bottom: 9px;
+    display: flex;
+    align-items: center;
+    font-size: 32px;
+}
+
+.embedded-legend-item strong {
+    min-width: 90px;
+    display: inline-block;
+    color: #4a3b32;
+}
+
+.organic-line {
+    stroke: #333333 !important;
+    stroke-width: calc(4px * var(--map-zoom-scale, 1)) !important;
+    filter: blur(0.6px);
+}
+
+/* Admin Undo Button */
+.admin-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #fff;
+    border: 2px solid #34495e;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 4px;
+    z-index: 1000;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: background 0.1s;
+}
+
+.admin-btn:hover {
+    background: #ecf0f1;
+}
+
+.admin-btn:active {
+    background: #bdc3c7;
+}
+
+/* Make Geoman vertex markers smaller */
+.marker-icon {
+    width: 6px !important;
+    height: 6px !important;
+    margin-left: -3px !important;
+    margin-top: -3px !important;
+    border-radius: 50% !important;
+    background-color: #ff0000 !important;
+    border: 1px solid white !important;
+}
+
+/* Hide popup close button ('x') globally */
+.leaflet-popup-close-button {
+    display: none !important;
+}
+.sharp-paint { filter: none !important; }
+
+.sharp-paint { stroke: none !important; stroke-width: 0 !important; outline: none !important; box-shadow: none !important; }
+
+
+.sharp-paint { shape-rendering: crispEdges !important; }

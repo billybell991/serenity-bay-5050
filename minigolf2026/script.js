@@ -7569,13 +7569,13 @@ L.circle([1379.070121016092, 1727.6216851387567], { radius: 3, stroke: false, we
         border-radius:2px;
     }
     .golf-flag-pennant{
-        position:absolute; left:50%; top:0;
-        width:40px; height:28px;
+        position:absolute; left:50%; top:-38px;
+        width:80px; height:56px;
         background: linear-gradient(135deg,#ff5a4d,#d22f26);
         clip-path: polygon(0 0, 100% 0, 74% 50%, 100% 100%, 0 100%);
         display:flex; align-items:center; justify-content:center;
         color:#fff; font-family:Arial,Helvetica,sans-serif; font-weight:800;
-        font-size:18px; line-height:1; padding-right:8px;
+        font-size:36px; line-height:1; padding-right:16px;
         text-shadow:0 1px 1px rgba(0,0,0,0.35);
         box-sizing:border-box;
     }
